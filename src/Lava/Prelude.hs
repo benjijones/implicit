@@ -10,7 +10,7 @@ exhaustive, but a useful start.
 module Lava.Prelude
   ( -- * Bit-vectors
     Word
-
+  , boolsToWord
     -- * Generalised primitives
   , andG
   , orG
@@ -70,54 +70,16 @@ module Lava.Prelude
 
 import Lava.Bit
 import Lava.Vector
+import Lava.Word
 import Lava.Binary
+import Lava.Generic
+import Lava.Arithmetic
 import Data.List(transpose, inits, tails)
-
--- | Parallel reduce for a commutative an associative operator.  Input
--- list must be non-empty.
-tree1 :: (a -> a -> a) -> [a] -> a
-tree1 f [x] = x
-tree1 f (x:y:ys) = tree1 f (ys ++ [f x y])
-
--- | Like 'tree1', but input list may be empty, in which case the zero
--- element is returned.
-tree :: (a -> a -> a) -> a -> [a] -> a
-tree f z xs = if null xs then z else tree1 f xs
 
 -- | Split a list into sub-lists of maximum length N.
 groupN :: Int -> [a] -> [[a]]
 groupN n [] = []
 groupN n xs = take n xs : groupN n (drop n xs)
-
--- | Logical AND of all bits in a structure.
-andG :: Generic a => a -> Bit
-andG = tree (<&>) high . bits
-
--- | Logical OR of all bits in a structure.
-orG :: Generic a => a -> Bit
-orG = tree (<|>) low . bits
-
-infix 4 ===
--- | Generic equality.
-(===) :: Generic a => a -> a -> Bit
-a === b = andG $ bits $ zipWithG (<=>) a b
-
-infix 4 =/=
--- | Generic diseqaulity.
-(=/=) :: Generic a => a -> a -> Bit
-a =/= b = inv $ andG $ bits $ zipWithG (<=>) a b
-
--- | Generic register, with initialiser.
-delay :: Generic a => a -> a -> a
-delay init a = lazyZipWithG delayBit init a
-
--- | Generic register, with initialiser, with input-enable.
-delayEn :: Generic a => a -> Bit -> a -> a
-delayEn init en a = lazyZipWithG (delayBitEn en) init a
-
--- | Generic two-way multiplexer.
-(?) :: Generic a => Bit -> (a, a) -> a
-cond ? (a, b) = zipWithG (muxBit cond) b a
 
 -- | N-way multiplexer, with one-hot address.
 select :: [Bit] -> [[Bit]] -> [Bit]
@@ -125,20 +87,13 @@ select sels inps = map orG
                  $ transpose
                  $ zipWith (\sel -> map (sel <&>)) sels inps
 
--- | Generic 'select'.
-selectG :: Generic a => [Bit] -> [a] -> a
-selectG sels inps = tree1 (zipWithG (<|>))
-                  $ zipWith (\sel -> mapG (sel <&>)) sels inps
+
 
 -- | Like 'select', but with zipped arguments.
 pick :: [(Bit, [Bit])] -> [Bit]
 pick choices = select sels inps
   where (sels, inps) = unzip choices
 
--- | Generic 'pick'.
-pickG :: Generic a => [(Bit, a)] -> a
-pickG choices = selectG sels inps
-  where (sels, inps) = unzip choices
 
 -- | Binary to one-hot decoder.
 decode :: [Bit] -> [Bit]
@@ -252,100 +207,11 @@ dualRam init pt (inps0, inps1) = (Vec out0, Vec out1)
           }
         )
 
----------------------------------- Arithmetic ---------------------------------
-
-fullAdd :: Bit -> Bit -> Bit -> (Bit, Bit)
-fullAdd cin a b = (sum, cout)
-  where sum' = a <#> b
-        sum  = xorcy (sum', cin)
-        cout = muxcy sum' (a, cin)
-
-binAdd :: Bit -> [Bit] -> [Bit] -> [Bit]
-binAdd c a b = add c a b
-  where
-    add c [a]    [b]    = [sum, cout]
-      where (sum, cout) = fullAdd c a b
-    add c (a:as) [b]    = add c (a:as) [b,b]
-    add c [a]    (b:bs) = add c [a,a] (b:bs)
-    add c (a:as) (b:bs) = sum : add cout as bs
-      where (sum, cout) = fullAdd c a b
-
-infixl 6 /+/
-(/+/) :: [Bit] -> [Bit] -> [Bit]
-a /+/ b = init (binAdd low a b)
-
-infixl 6 /-/
-(/-/) :: [Bit] -> [Bit] -> [Bit]
-a /-/ b = init (binAdd high a (map inv b))
-
-infix 4 /</
-(/</) :: [Bit] -> [Bit] -> Bit
-a /</ b = last (a /-/ b)
-
-infix 4 /<=/
-(/<=/) :: [Bit] -> [Bit] -> Bit
-a /<=/ b = inv (b /</ a)
-
-infix 4 />/
-(/>/) :: [Bit] -> [Bit] -> Bit
-a />/ b = b /</ a
-
-infix 4 />=/
-(/>=/) :: [Bit] -> [Bit] -> Bit
-a />=/ b = b /<=/ a
-
-ult :: [Bit] -> [Bit] -> Bit
-a `ult` b = inv $ last $ binAdd high a (map inv b)
-
-ule :: [Bit] -> [Bit] -> Bit
-a `ule` b = inv (b `ult` a)
-
-ugt :: [Bit] -> [Bit] -> Bit
-a `ugt` b = b `ult` a
-
-uge :: [Bit] -> [Bit] -> Bit
-a `uge` b = b `ule` a
-
--- | Two's complement of a bit-list.
-complement :: [Bit] -> [Bit]
-complement a = init $ binAdd high (map inv a) [low]
-
--- | Addition of a single bit to a bit-list.
-bitPlus :: Bit -> [Bit] -> [Bit]
-bitPlus a b = init (binAdd a (map (const low) b) b)
-
 ---------------------------------- Bit Vectors --------------------------------
 
 instance Generic a => Generic (Vec n a) where
   generic (Vec []) = cons (Vec [])
   generic (Vec (x:xs)) = cons (\x xs -> Vec (x:xs)) >< x >< xs
-
--- | Notably, an instance of the Num class.
-type Word n = Vec n Bit
-
--- | Unsigned bit-vectors.
-type Unsigned n = Word n
-
--- | Convert bit-vector to an integer.
-wordToInt :: Integral a => Word n -> a
-wordToInt = binToNat . map bitToBool . velems
-
-instance Eq (Vec n Bit) where
-  a == b = error msg
-    where msg = "== and /= on bit-vectors is not supported: try === and =/="
-
-instance N n => Num (Vec n Bit) where
-  a + b = vec (velems a /+/ velems b)
-  a - b = vec (velems a /-/ velems b)
-  a * b = error "Multiplication of bit-vectors is not yet supported"
-  abs a = a
-  -- just 0 or 1 as vectors are interpreted as unsigned
-  signum v = vec (orG xs : repeat 0)
-    where xs = velems v
-  fromInteger i = sized (\n -> Vec (fromInteger i `ofWidth` n))
-
-ofWidth :: Integral a => a -> Int -> [Bit]
-n `ofWidth` s = map boolToBit (intToSizedBin n s)
 
 infix 4 |<=|, |<|, |>|, |>=|
 
@@ -409,11 +275,3 @@ nameWord s = sized (\n -> Vec $ nameList n s)
 
 instance Eq Bit where
   a == b = error "== and /= on bits is not supported."
-
-instance Num Bit where
-  a + b = a <#> b
-  a - b = a <&> inv b
-  a * b = a <&> b
-  abs a = a
-  signum a = a
-  fromInteger i = if i == 0 then low else high

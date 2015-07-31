@@ -1,13 +1,13 @@
 module Implicit.Expr where
 
-data Expr =
+data Expr b =
     Data [Bool]
-  | Case Expr [(Expr, Expr)] -- (Data, Expr)
-  | Let Expr Expr
-  | LetRef Int
+  | Case (Expr b) [(Expr b, Expr b)] -- (Data, Expr)
+  | Let b (Expr b) (Expr b)
+  | LetRef b
   deriving (Show, Read)
 
-getData :: Expr -> [Bool]
+getData :: Expr b -> [Bool]
 getData (Data a) = a
-getData _        = error "getData failed"
+getData _        = error "getData called on non-Data Expr"
 
