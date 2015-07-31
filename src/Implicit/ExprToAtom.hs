@@ -16,7 +16,7 @@ exprToAtoms (E.Case (E.Data value) cases) =
                 cases
 exprToAtoms (E.Case _ _) = error "scrutinee must be a Data expression"
    
-exprToAtoms (E.Let bind expr) = u[A.Let ]
+exprToAtoms (E.Let bind expr) = undefined -- [A.Let ]
 
 boolsToVec :: (N n) => [Bool] -> Vec n Bit
 boolsToVec = vec . map boolToBit
