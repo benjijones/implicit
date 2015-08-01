@@ -17,6 +17,8 @@ data Atom n =
   | In
   | LetRef (Word n)
   | UnLet (Word n)
+  
+  deriving Show
 
 atomToVec :: (N n) => Atom n -> Word (S (S (S n)))
 atomToVec (Data value) = low  +> low  +> low  +> value -- 000(0|1)^n
