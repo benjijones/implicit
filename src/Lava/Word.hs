@@ -22,7 +22,7 @@ instance Eq (Vec n Bit) where
   a == b = error msg
     where msg = "== and /= on bit-vectors is not supported: try === and =/="
 
-instance N n => Num (Word n) where
+instance N n => Num (Vec n Bit) where
   a + b = vec (velems a /+/ velems b)
   a - b = vec (velems a /-/ velems b)
   a * b = error "Multiplication of bit-vectors is not yet supported"
@@ -30,10 +30,20 @@ instance N n => Num (Word n) where
   -- just 0 or 1 as vectors are interpreted as unsigned
   signum v = vec (orG xs : repeat 0)
     where xs = velems v
-  fromInteger i = sized (\n -> Vec (fromInteger i `ofWidth` n))
+  fromInteger i = sized (\n -> Vec (i `ofWidth` n))
 
 ofWidth :: Integral a => a -> Int -> [Bit]
 n `ofWidth` s = map boolToBit (intToSizedBin n s)
 
 boolsToWord :: (N n) => [Bool] -> Word n
 boolsToWord = vec . map boolToBit
+
+allLow :: (N n) => Word n
+allLow = boolsToWord (repeat False)
+
+-- | Given [Word n], return the lowest (Word n) not
+--  already in the list. returns Nothing if the list
+--  already contains every n-bit Word
+uniqueWord :: (N n) => [Word n] -> Maybe (Word n)
+uniqueWord = uniqueWordOffset allLow
+  where uniqueWordOffset word words = Just word
