@@ -14,8 +14,8 @@ main =
       expr = Let "x" (Data 0) $ 
              Let "y" (Data 1) $
              LetRef "x"
-      result :: [A.Atom N3]
+      result :: [A.Atom N4]
       result = exprToAtoms expr in
       do
       mapM_ print result
-      mapM_ (print . A.atomToVec n3) result
+      mapM_ (print . A.atomToVec) result
