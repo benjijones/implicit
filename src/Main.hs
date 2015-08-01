@@ -11,9 +11,11 @@ import Lava.Bit
 main :: IO ()
 main =
   let
-      expr = Let "x" (Data 0) $ 
-             Let "y" (Data 1) $
-             LetRef "x"
+      expr = Let "x" (Data 0) $
+             Case (LetRef "x") [
+             (Data 0, Data 2) ,
+             (Data 1, Data 3)
+             ]
       result :: [A.Atom N4]
       result = exprToAtoms expr in
       do

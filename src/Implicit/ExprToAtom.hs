@@ -4,11 +4,6 @@ import Implicit.Expr as E
 import Implicit.Atom as A
 
 import Lava.Vector
-import Lava.Bit
-import Lava.Word
-import Lava.Binary
-
-import Lava.Prelude
 
 import Data.List (find)
 
@@ -16,25 +11,24 @@ exprToAtoms :: (N n, Eq b) => Expr b -> [Atom n]
 exprToAtoms = exprToAtomsWithContext []
 
 exprToAtomsWithContext :: (N n, Eq b) => [(b, Integer)] -> Expr b -> [Atom n]
-exprToAtomsWithContext _ (E.Data value) = [A.Data value]
+exprToAtomsWithContext _ (E.Data val) = [A.Data val]
 
-exprToAtomsWithContext _ (E.Case (E.Data value) cases) =
-    [A.Case value] ++
-    concatMap (\branch -> Arm (getData . fst $ branch) :
-                         (exprToAtoms . snd $ branch))
+exprToAtomsWithContext c (E.Case scrut cases) =
+    A.Case :
+    exprToAtomsWithContext c scrut ++
+    concatMap (\(pattern, expr) -> Arm (getData pattern) :
+                         exprToAtomsWithContext c expr)
               cases
 
-exprToAtomsWithContext _ (E.Case _ _) = error "scrutinee must be a Data expression"
-
 exprToAtomsWithContext context (E.Let bind bound expr) =
-    case {-uniqueWord . map snd $ context-} Just 1 of
-        Just word -> let newContext = (bind, word) : context in
-                         A.Let word :
+    let uniqueId = unique . map snd $ context
+        newContext = (bind, uniqueId) : context in
+                         A.Let uniqueId :
                          exprToAtomsWithContext newContext bound ++
                          A.In :
                          exprToAtomsWithContext newContext expr ++
-                         [A.UnLet word]
-        Nothing   -> error "too many bound variables!"
+                         [A.UnLet uniqueId]
+    where unique prevIds = if null prevIds then 0 else head prevIds + 1 -- NAIVE: FIX WHEN YOU FEEL UP TO IT
 
 exprToAtomsWithContext context (E.LetRef bind) =
     case find ((== bind) . fst) context of

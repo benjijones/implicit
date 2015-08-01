@@ -1,7 +1,5 @@
 module Implicit.Expr where
 
-import Lava.Binary
-
 data Expr b =
     Data Integer
   | Case (Expr b) [(Expr b, Expr b)] -- (Data, Expr)

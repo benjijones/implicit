@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -XFlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Lava.Word where
 
@@ -36,14 +36,3 @@ instance N n => Num (Vec n Bit) where
 
 ofWidth :: Integral a => a -> Int -> [Bit]
 n `ofWidth` s = map boolToBit (intToSizedBin n s)
-
--- | Given [Word n], return the lowest (Word n) not
---  already in the list. returns Nothing if the list
---  already contains every n-bit Word
---uniqueWord :: (N n) => [Word n] -> Maybe (Word n)
-{-uniqueWord = foldr (\)
-uniqueWord = uniqueWordOffset allLow
-  where uniqueWordOffset word = foldr (\test ) word
-        case find word words of
-          Just _ -> uniqueWordOffset (word) 
-          Nothing -> Just word-}
