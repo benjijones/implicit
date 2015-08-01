@@ -8,6 +8,8 @@ import Lava.Vector
 import Lava.Arithmetic
 import Lava.Generic
 
+import Data.List(find)
+
 -- | Notably, an instance of the Num class.
 type Word n = Vec n Bit
 
@@ -35,15 +37,13 @@ instance N n => Num (Vec n Bit) where
 ofWidth :: Integral a => a -> Int -> [Bit]
 n `ofWidth` s = map boolToBit (intToSizedBin n s)
 
-boolsToWord :: (N n) => [Bool] -> Word n
-boolsToWord = vec . map boolToBit
-
-allLow :: (N n) => Word n
-allLow = boolsToWord (repeat False)
-
 -- | Given [Word n], return the lowest (Word n) not
 --  already in the list. returns Nothing if the list
 --  already contains every n-bit Word
-uniqueWord :: (N n) => [Word n] -> Maybe (Word n)
+--uniqueWord :: (N n) => [Word n] -> Maybe (Word n)
+{-uniqueWord = foldr (\)
 uniqueWord = uniqueWordOffset allLow
-  where uniqueWordOffset word words = Just word
+  where uniqueWordOffset word = foldr (\test ) word
+        case find word words of
+          Just _ -> uniqueWordOffset (word) 
+          Nothing -> Just word-}

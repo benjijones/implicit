@@ -5,10 +5,17 @@ import qualified Implicit.Atom as A
 import Implicit.ExprToAtom
 
 import Lava.Vector
+import Lava.Binary
+import Lava.Bit
 
 main :: IO ()
 main =
-  let expr = Let "x" (Data [True,False]) (LetRef "x")
-      result :: [A.Atom N2]
+  let
+      expr = Let "x" (Data 0) $ 
+             Let "y" (Data 1) $
+             LetRef "x"
+      result :: [A.Atom N3]
       result = exprToAtoms expr in
-  putStr . unlines . map show $ result
+      do
+      mapM_ print result
+      mapM_ (print . A.atomToVec n3) result

@@ -2,28 +2,30 @@ module Implicit.Atom where
 
 import Lava.Bit
 import Lava.Vector
+import Lava.Binary
 
 import Lava.Prelude
 
 data Atom n =
-    Data (Word n)
+    Data (Integer)
 
   -- branching
-  | Case (Word n)
-  | Arm (Word n)
+  | Case (Integer)
+  | Arm (Integer)
 
   -- let expressions
-  | Let (Word n)
+  | Let (Integer)
   | In
-  | LetRef (Word n)
-  | UnLet (Word n)
-  
+  | LetRef (Integer)
+  | UnLet (Integer)
+
   deriving Show
 
-atomToVec :: (N n) => Atom n -> Word (S (S (S n)))
-atomToVec (Data value) = low  +> low  +> low  +> value -- 000(0|1)^n
-atomToVec (Case arm)   = low  +> high +> low  +> arm   -- 010(0|1)^n
-atomToVec (Arm arm)    = low  +> high +> high +> arm   -- 011(0|1)^n
-atomToVec (Let ref)    = high +> low  +> low  +> ref   -- 100(0|1)^n
-atomToVec In           = high +> low  +> high +> boolsToWord (repeat False)
-atomToVec (LetRef ref) = high +> high +> low  +> ref   -- 110(0|1)^n
+atomToVec :: (N n) => n -> Atom n -> Word (S (S (S n)))
+atomToVec n (Data val)   = low  +> low  +> low  +> fromInteger val -- 000(0|1)^n
+atomToVec n (Case arm)   = low  +> high +> low  +> fromInteger arm -- 010(0|1)^n
+atomToVec n (Arm arm)    = low  +> high +> high +> fromInteger arm -- 011(0|1)^n
+atomToVec n (Let ref)    = high +> low  +> low  +> fromInteger ref -- 100(0|1)^n
+atomToVec n In           = high +> low  +> high +> 0               -- 101(0)^n
+atomToVec n (LetRef ref) = high +> high +> low  +> fromInteger ref -- 110(0|1)^n
+atomToVec n (UnLet ref)  = high +> high +> high +> fromInteger ref -- 111(0|1)^n

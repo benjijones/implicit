@@ -10,7 +10,6 @@ exhaustive, but a useful start.
 module Lava.Prelude
   ( -- * Bit-vectors
     Word
-  , boolsToWord
     -- * Generalised primitives
   , andG
   , orG
