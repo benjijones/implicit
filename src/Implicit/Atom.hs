@@ -29,3 +29,6 @@ atomToVec (Let ref)    = high +> low  +> low  +> fromInteger ref -- 100(0|1)^n
 atomToVec In           = high +> low  +> high +> 0               -- 101(0)^n
 atomToVec (LetRef ref) = high +> high +> low  +> fromInteger ref -- 110(0|1)^n
 atomToVec (UnLet ref)  = high +> high +> high +> fromInteger ref -- 111(0|1)^n
+
+isLet :: (N n) => Word (S (S (S n))) -> Bit
+isLet w = (w `vat` n0) <&> inv (w `vat` n1) <&> inv (w `vat` n2)
