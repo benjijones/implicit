@@ -1,27 +1,36 @@
+{-# LANGUAGE NamedFieldPuns #-}
 module Implicit.EvaluationMemory where
 
 import Lava.Word
 import Lava.Recipe
 import Lava.Vector
-import Lava.Prelude
+import Lava.Ram
 
 data EvaluationMemory m n =
   EvaluationMemory {
     address :: Sig m,
+    input :: Sig n,
+    write :: Sig N1,
     output :: Word n
   }
 
 newEvaluationMemory :: (N n, N m) => New (EvaluationMemory m n)
 newEvaluationMemory = do
-  addr <- newSig
+  address <- newSig
+  input <- newSig
+  write <- newSig
 
   let ramInput = RamInputs {
-        
+        ramData = input!val,
+        ramAddress = address!val,
+        ramWrite = write!val!vhead
       }
 
-      ramOutput = ram 
+      ramOutput = ram [] Width9 ramInput
 
   return $ EvaluationMemory {
-    address = addr,
+    address,
+    input,
+    write,
     output = ramOutput
   }
