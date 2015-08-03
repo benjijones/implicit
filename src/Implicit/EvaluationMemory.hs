@@ -14,7 +14,7 @@ data EvaluationMemory m n =
     output :: Word n
   }
 
-newEvaluationMemory :: (N n, N m) => New (EvaluationMemory m n)
+newEvaluationMemory :: (N m, N n) => New (EvaluationMemory m n)
 newEvaluationMemory = do
   address <- newSig
   input <- newSig
@@ -34,3 +34,4 @@ newEvaluationMemory = do
     write,
     output = ramOutput
   }
+  

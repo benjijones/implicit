@@ -2,9 +2,9 @@ module Implicit.Atom where
 
 import Lava.Bit
 import Lava.Vector
-
-
 import Lava.Prelude
+
+import Data.Bits
 
 data Atom n =
     Data (Integer)
@@ -26,11 +26,34 @@ atomToVec :: (N n) => Atom n -> Word (S (S (S n)))
 atomToVec (Data val)   = low  +> low  +> low  +> fromInteger val -- 000(0|1)^n
 atomToVec Case         = low  +> low  +> high +> 0               -- 001(0)^n
 atomToVec (Arm arm)    = low  +> high +> low  +> fromInteger arm -- 010(0|1)^n
-atomToVec UnArm        = low  +> high +> high +> 0
+atomToVec UnArm        = low  +> high +> high +> 0               -- 011(0)^n
 atomToVec (Let ref)    = high +> low  +> low  +> fromInteger ref -- 100(0|1)^n
 atomToVec In           = high +> low  +> high +> 0               -- 101(0)^n
 atomToVec (LetRef ref) = high +> high +> low  +> fromInteger ref -- 110(0|1)^n
 atomToVec (UnLet ref)  = high +> high +> high +> fromInteger ref -- 111(0|1)^n
+
+atomToInteger :: Atom n -> Integer
+atomToInteger atom = (typeEncoding atom) `shiftL` 3 .|. atomContents atom
+
+atomContents :: Atom n -> Integer
+atomContents (Data val)   = val
+atomContents Case         = 0
+atomContents (Arm arm)    = arm
+atomContents UnArm        = 0
+atomContents (Let ref)    = ref
+atomContents In           = 0
+atomContents (LetRef ref) = ref
+atomContents (UnLet ref)  = ref
+
+typeEncoding :: Atom n -> Integer
+typeEncoding (Data val)   = 0
+typeEncoding Case         = 1
+typeEncoding (Arm arm)    = 2
+typeEncoding UnArm        = 3
+typeEncoding (Let ref)    = 4
+typeEncoding In           = 5
+typeEncoding (LetRef ref) = 6
+typeEncoding (UnLet ref)  = 7
 
 isData :: (N n) => Word (S (S (S (S n)))) -> Bit
 isData w = let typeBits = vtail w in
@@ -47,6 +70,10 @@ isUnArm w = let typeBits = vtail w in
 isLet :: (N n) => Word (S (S (S (S n)))) -> Bit
 isLet w = let typeBits = vtail w in
               (typeBits `vat` n0) <&> inv (typeBits `vat` n1) <&> inv (typeBits `vat` n2)
+
+isUnLet :: (N n) => Word (S (S (S (S n)))) -> Bit
+isUnLet w = let typeBits = vtail w in
+              typeBits `vat` n0 <&> typeBits `vat` n1 <&> typeBits `vat` n2
 
 markDelete :: (N n) => Word (S (S (S (S n)))) -> Word (S (S (S (S n))))
 markDelete w = high +> vtail w
