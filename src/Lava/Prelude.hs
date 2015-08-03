@@ -73,6 +73,7 @@ import Lava.Word
 import Lava.Binary
 import Lava.Generic
 import Lava.Arithmetic
+import Lava.Ram
 import Data.List(transpose, inits, tails)
 
 -- | Split a list into sub-lists of maximum length N.
@@ -168,43 +169,6 @@ intToOneHot i w
 -- | Convert a Haskell @Int@ to a one-hot bit-vector.
 oneHot :: N n => Int -> Word n
 oneHot i = sized (Vec . intToOneHot i)
-
-------------------------------------- RAMs ------------------------------------
-
-data RamInputs n m =
-  RamInputs {
-    ramData    :: Word n
-  , ramAddress :: Word m
-  , ramWrite   :: Bit
-  }
-
--- | RAM of any width and size, with intialiser.
-ram :: (N n, N m) => [Integer] -> RamAlgorithm -> RamInputs n m -> Word n
-ram init pt inps = Vec $ primRam init pt $
-  RamInps {
-      dataBus     = velems (vrigid $ ramData inps)
-    , addressBus  = velems (vrigid $ ramAddress inps)
-    , writeEnable = ramWrite inps
-  }
-
--- | Dual-port RAM of any width and size, with intialiser.
-dualRam :: (N n, N m) => [Integer] -> RamAlgorithm
-        -> (RamInputs n m, RamInputs n m) -> (Word n, Word n)
-dualRam init pt (inps0, inps1) = (Vec out0, Vec out1)
-  where
-    (out0, out1) =
-      primDualRam init pt
-        ( RamInps {
-            dataBus     = velems (vrigid $ ramData inps0)
-          , addressBus  = velems (vrigid $ ramAddress inps0)
-          , writeEnable = ramWrite inps0
-          }
-        , RamInps {
-            dataBus     = velems (vrigid $ ramData inps1)
-          , addressBus  = velems (vrigid $ ramAddress inps1)
-          , writeEnable = ramWrite inps1
-          }
-        )
 
 ---------------------------------- Bit Vectors --------------------------------
 
