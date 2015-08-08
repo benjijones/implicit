@@ -33,7 +33,7 @@ atomToVec (LetRef ref) = high +> high +> low  +> fromInteger ref -- 110(0|1)^n
 atomToVec (UnLet ref)  = high +> high +> high +> fromInteger ref -- 111(0|1)^n
 
 atomToInteger :: Atom n -> Integer
-atomToInteger atom = (typeEncoding atom) `shiftL` 3 .|. atomContents atom
+atomToInteger atom = 0 .|. (typeEncoding atom `shiftL` 1) .|. (atomContents atom `shiftL` 4)
 
 atomContents :: Atom n -> Integer
 atomContents (Data val)   = val
@@ -55,25 +55,23 @@ typeEncoding In           = 5
 typeEncoding (LetRef ref) = 6
 typeEncoding (UnLet ref)  = 7
 
+typeBits :: (N n) => Word (S (S (S (S n)))) -> Word N3
+typeBits = vtake n3 . vdrop n1
+
 isData :: (N n) => Word (S (S (S (S n)))) -> Bit
-isData w = let typeBits = vtail w in
-               inv (typeBits `vat` n0) <&> inv (typeBits `vat` n1) <&> inv (typeBits `vat` n2)
+isData w = typeBits w === 0
 
 isCase :: (N n) => Word (S (S (S (S n)))) -> Bit
-isCase w = let typeBits = vtail w in
-               inv (typeBits `vat` n0) <&> inv (typeBits `vat` n1) <&> typeBits `vat` n2
+isCase w = typeBits w === 1
 
 isUnArm :: (N n) => Word (S (S (S (S n)))) -> Bit
-isUnArm w = let typeBits = vtail w in
-               inv (typeBits `vat` n0) <&> inv (typeBits `vat` n1) <&> (typeBits `vat` n2)
+isUnArm w = typeBits w === 2
 
 isLet :: (N n) => Word (S (S (S (S n)))) -> Bit
-isLet w = let typeBits = vtail w in
-              (typeBits `vat` n0) <&> inv (typeBits `vat` n1) <&> inv (typeBits `vat` n2)
+isLet w = typeBits w === 4
 
 isUnLet :: (N n) => Word (S (S (S (S n)))) -> Bit
-isUnLet w = let typeBits = vtail w in
-              typeBits `vat` n0 <&> typeBits `vat` n1 <&> typeBits `vat` n2
+isUnLet w = typeBits w === 7
 
 markDelete :: (N n) => Word (S (S (S (S n)))) -> Word (S (S (S (S n))))
-markDelete w = high +> vtail w
+markDelete w = vinit w <+ high
