@@ -5,6 +5,7 @@ import Implicit.ExprToAtom
 import qualified Implicit.Atom as A
 import Implicit.LetReplacer
 import Implicit.EvaluationMemory
+import Implicit.Processor
 
 import Lava.Vector
 import Lava.Binary
@@ -23,8 +24,9 @@ main = do
 
       program = map A.atomToInteger atoms
 
-      newLR :: New (LetReplacer N4 N5)
-      newLR = newLetReplacer program
+      newProc :: New Processor
+      newProc = newProcessor program
 
-      result = simRecipe newLR letReplace state
+      result = simRecipe newProc processor (memory . letReplacer)
+  mapM_ print program
   print result

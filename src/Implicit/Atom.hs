@@ -22,16 +22,6 @@ data Atom n =
 
   deriving Show
 
-atomToVec :: (N n) => Atom n -> Word (S (S (S n)))
-atomToVec (Data val)   = low  +> low  +> low  +> fromInteger val -- 000(0|1)^n
-atomToVec Case         = low  +> low  +> high +> 0               -- 001(0)^n
-atomToVec (Arm arm)    = low  +> high +> low  +> fromInteger arm -- 010(0|1)^n
-atomToVec UnArm        = low  +> high +> high +> 0               -- 011(0)^n
-atomToVec (Let ref)    = high +> low  +> low  +> fromInteger ref -- 100(0|1)^n
-atomToVec In           = high +> low  +> high +> 0               -- 101(0)^n
-atomToVec (LetRef ref) = high +> high +> low  +> fromInteger ref -- 110(0|1)^n
-atomToVec (UnLet ref)  = high +> high +> high +> fromInteger ref -- 111(0|1)^n
-
 atomToInteger :: Atom n -> Integer
 atomToInteger atom = 0 .|. (typeEncoding atom `shiftL` 1) .|. (atomContents atom `shiftL` 4)
 
@@ -58,6 +48,9 @@ typeEncoding (UnLet ref)  = 7
 typeBits :: (N n) => Word (S (S (S (S n)))) -> Word N3
 typeBits = vtake n3 . vdrop n1
 
+contentBits :: (N n) => Word (S (S (S (S n)))) -> Word n
+contentBits = vdrop n4
+
 isData :: (N n) => Word (S (S (S (S n)))) -> Bit
 isData w = typeBits w === 0
 
@@ -69,6 +62,9 @@ isUnArm w = typeBits w === 2
 
 isLet :: (N n) => Word (S (S (S (S n)))) -> Bit
 isLet w = typeBits w === 4
+
+isLetRef :: (N n) => Word (S (S (S (S n)))) -> Bit
+isLetRef w = typeBits w === 6
 
 isUnLet :: (N n) => Word (S (S (S (S n)))) -> Bit
 isUnLet w = typeBits w === 7

@@ -16,16 +16,17 @@ import Debug.Trace
 
 data LetReplacer m n =
     LetReplacer {
-      reference :: Reg (S (S (S (S n)))),
+      reference :: Reg n,
       contents :: Reg (S (S (S (S n)))),
       state :: Reg N2,
       -- 0 : unoccupied, looking for a let
       -- 1 : stored a let binding, now storing the contents
       -- 2 : looking for references
-      -- 3 : deleting the let cells?
+      -- 3 : finished
       address :: Reg m,
-      memory :: Word (S (S (S (S n))))
-      --writeValue :: Sig (S (S (S (S n))))
+      memory :: Word (S (S (S (S n)))),
+      writeData :: Sig (S (S (S (S n)))),
+      writeEn :: Sig N1
     } deriving Show
 
 newLetReplacer :: (N m, N n) => [Integer] -> New (LetReplacer m n)
@@ -35,15 +36,18 @@ newLetReplacer program = do
   state <- newReg
   address <- newReg
 
+  writeData <- newSig
+  writeEn <- newSig
+
       --ramInputs :: RamInputs (S (S (S (S n)))) m
   let ramInputs = RamInputs {
-        ramData = contents!val,
+        ramData = writeData!val,
         ramAddress = address!val,
-        ramWrite = writeEn
+        ramWrite = writeEn!val!vhead
       }
       memory = EM.evaluationMemory ramInputs program
 
-      writeEn = writeEnable (state!val) (reference!val) memory
+      --writeEn = writeEnable (state!val) (reference!val) memory
 
       --state = delay 0 (nextState state (reference!val) memory)
 
@@ -52,8 +56,9 @@ newLetReplacer program = do
     contents,
     state,
     address,
-    memory
-    --writeValue
+    memory,
+    writeData,
+    writeEn
   }
 
 writeEnable :: Word N2 -> Word n -> Word n -> Bit
@@ -62,20 +67,51 @@ writeEnable state reference read =
 
 letReplace :: (N n, N m) => LetReplacer m n -> Recipe
 letReplace lr = Seq [
-    Tick
-  , lr!state!val!isUnbound <&> lr!memory!isLet |>
-      lr!state <== 3
+    lr!bindReference
+  , lr!bindContents
+  , lr!replaceLet
+  , lr!unbind
+  , lr!incrementAddress
+  , lr!state!val === 3 |> lr!address <== 0
   , Tick
   ]
 
-nextState :: (N n) => Word N2 -> Word (S (S (S (S n)))) -> Word (S (S (S (S n)))) -> Word N2
-nextState prev reference read =
-  if bitToBool (prev!isUnbound) then
-    if bitToBool (read!isLet) then 1 else prev
-  else if bitToBool (prev!isBinding) then 2
-  else if bitToBool (prev!isBound) then
-    if bitToBool (read === reference) then 3 else prev
-  else prev
+bindReference :: (N m, N n) => LetReplacer n m -> Recipe
+bindReference lr = lr!state!val!isUnbound <&> lr!memory!isLet |>
+      Seq [
+        lr!reference <== lr!memory!contentBits
+      , lr!writeData <== lr!memory!markDelete
+      , lr!writeEn <== 1
+      , lr!state <== 1
+      ]
+
+bindContents :: (N m, N n) => LetReplacer n m -> Recipe
+bindContents lr = lr!state!val!isBinding |>
+      Seq [
+        lr!contents <== lr!memory
+      , lr!writeData <== lr!memory!markDelete
+      , lr!writeEn <== 1
+      , lr!state <== 2
+      ]
+
+-- need to delete "In" cell-
+-- might need another state bit,
+-- it would useful to have anyways.
+
+replaceLet :: (N m, N n) => LetReplacer n m -> Recipe
+replaceLet lr = lr!state!val!isBound <&> lr!memory!isLetRef |>
+      Seq [
+        lr!writeData <== lr!contents!val
+      , lr!writeEn <== 1
+      ]
+
+unbind :: (N m, N n) => LetReplacer n m -> Recipe
+unbind lr = lr!state!val!isBound <&> lr!memory!isUnLet |>
+        lr!reference!val === lr!memory!contentBits |>
+          Seq [
+            lr!writeData <== lr!memory!markDelete
+          , lr!state <== 3
+          ]
 
 isUnbound :: Word N2 -> Bit
 isUnbound w = w === 0
@@ -86,6 +122,6 @@ isBinding w = w === 1
 isBound :: Word N2 -> Bit
 isBound w = w === 2
 
-{-incrementAddress :: (N m, N n) => LetReplacer m n -> Recipe
+incrementAddress :: (N m, N n) => LetReplacer m n -> Recipe
 incrementAddress lr =
-  lr!address <== lr!address!val + 1-}
+  lr!address <== lr!address!val + 1
