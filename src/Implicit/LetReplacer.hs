@@ -12,8 +12,6 @@ import Lava.Bit
 import Lava.Recipe
 import Lava.Prelude
 
-import Debug.Trace
-
 data LetReplacer m n =
     LetReplacer {
       reference :: Reg n,

@@ -6,8 +6,6 @@ import Lava.Vector
 import Lava.Ram
 import Lava.Bit
 
-import Debug.Trace
-
 type EvaluationMemory n = Word n
 
 

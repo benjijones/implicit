@@ -52,8 +52,6 @@ import Data.Maybe
 import Control.Applicative (Applicative(..))
 import Control.Monad       (liftM, ap)
 
-import Debug.Trace
-
 type VarId = Int
 
 data Recipe

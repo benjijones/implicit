@@ -10,8 +10,6 @@ import Lava.Vector
 import Lava.Recipe
 import Lava.Generic
 
-import Debug.Trace
-
 data Processor =
   Processor {
     --memory :: EvaluationMemory N11 N9,

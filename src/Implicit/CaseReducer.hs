@@ -8,8 +8,6 @@ import Lava.Vector
 import Lava.Word
 import Lava.Generic
 
-import Debug.Trace
-
 data CaseReducer n =
     CaseReducer {
       reference  :: Reg (S (S (S (S n)))),
