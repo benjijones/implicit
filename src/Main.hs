@@ -27,6 +27,6 @@ main = do
       newProc :: New Processor
       newProc = newProcessor program
 
-      result = simRecipe newProc processor (memory . letReplacer)
-  mapM_ print program
-  print result
+      result = simRecipe newProc (processor 0) (memory . letReplacer)
+  mapM_ print atoms
+  print (A.wordToAtom result)

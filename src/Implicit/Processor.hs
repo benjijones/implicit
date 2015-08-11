@@ -32,11 +32,11 @@ newProcessor program = do
     --finished
   }
 
-processor :: Processor -> Recipe
-processor p =
+processor :: Integer -> Processor -> Recipe
+processor finalAddress p =
   Seq [
     Tick
-  , While (p!letReplacer!state!val =/= 3 <|> p!letReplacer!address!val =/= 2) $
+  , While (p!letReplacer!state!val =/= 3 <|> p!letReplacer!address!val =/= fromInteger finalAddress) $
     Seq [
       p!letReplacer!letReplace
     , p!cycles <== p!cycles!val + 1
