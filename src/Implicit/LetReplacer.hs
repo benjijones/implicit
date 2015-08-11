@@ -19,9 +19,10 @@ data LetReplacer m n =
       reference :: Reg n,
       contents :: Reg (S (S (S (S n)))),
       state :: Reg N2,
-      -- 0 : unoccupied, looking for a let
-      -- 1 : stored a let binding, now storing the contents
-      -- 2 : looking for references
+      -- 0 : store let binder and delete
+      -- 1 : store let contents and delete
+      --     delete trailing In
+      -- 2 : replace LetRef and delete
       -- 3 : finished
       address :: Reg m,
       memory :: Word (S (S (S (S n)))),
@@ -61,10 +62,6 @@ newLetReplacer program = do
     writeEn
   }
 
-writeEnable :: Word N2 -> Word n -> Word n -> Bit
-writeEnable state reference read =
-  (state!isBound) <&> (read === reference)
-
 letReplace :: (N n, N m) => LetReplacer m n -> Recipe
 letReplace lr = Seq [
     lr!bindReference
@@ -87,16 +84,19 @@ bindReference lr = lr!state!val!isUnbound <&> lr!memory!isLet |>
 
 bindContents :: (N m, N n) => LetReplacer n m -> Recipe
 bindContents lr = lr!state!val!isBinding |>
-      Seq [
-        lr!contents <== lr!memory
-      , lr!writeData <== lr!memory!markDelete
-      , lr!writeEn <== 1
-      , lr!state <== 2
-      ]
+  Seq [
+    lr!memory!isIn!inv |> Seq [
+      lr!contents <== lr!memory
+    , lr!writeData <== lr!memory!markDelete
+    , lr!writeEn <== 1
+    ]
+  , lr!memory!isIn |> Seq [
+      lr!writeData <== lr!memory!markDelete
+    , lr!writeEn <== 1
+    , lr!state <== 2
+    ]
+  ]
 
--- need to delete "In" cell-
--- might need another state bit,
--- it would useful to have anyways.
 
 replaceLet :: (N m, N n) => LetReplacer n m -> Recipe
 replaceLet lr = lr!state!val!isBound <&> lr!memory!isLetRef |>
@@ -114,13 +114,13 @@ unbind lr = lr!state!val!isBound <&> lr!memory!isUnLet |>
           ]
 
 isUnbound :: Word N2 -> Bit
-isUnbound w = w === 0
+isUnbound = (=== 0)
 
 isBinding :: Word N2 -> Bit
-isBinding w = w === 1
+isBinding = (=== 1)
 
 isBound :: Word N2 -> Bit
-isBound w = w === 2
+isBound = (=== 2)
 
 incrementAddress :: (N m, N n) => LetReplacer m n -> Recipe
 incrementAddress lr =

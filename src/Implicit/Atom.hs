@@ -52,22 +52,25 @@ contentBits :: (N n) => Word (S (S (S (S n)))) -> Word n
 contentBits = vdrop n4
 
 isData :: (N n) => Word (S (S (S (S n)))) -> Bit
-isData w = typeBits w === 0
+isData = (=== 0) . typeBits
 
 isCase :: (N n) => Word (S (S (S (S n)))) -> Bit
-isCase w = typeBits w === 1
+isCase = (=== 1) . typeBits
 
 isUnArm :: (N n) => Word (S (S (S (S n)))) -> Bit
-isUnArm w = typeBits w === 2
+isUnArm = (=== 3) . typeBits
 
 isLet :: (N n) => Word (S (S (S (S n)))) -> Bit
-isLet w = typeBits w === 4
+isLet = (=== 4) . typeBits
+
+isIn :: (N n) => Word (S (S (S (S n)))) -> Bit
+isIn = (=== 5) . typeBits
 
 isLetRef :: (N n) => Word (S (S (S (S n)))) -> Bit
-isLetRef w = typeBits w === 6
+isLetRef = (=== 6) . typeBits
 
 isUnLet :: (N n) => Word (S (S (S (S n)))) -> Bit
-isUnLet w = typeBits w === 7
+isUnLet = (=== 7) . typeBits
 
 markDelete :: (N n) => Word (S (S (S (S n)))) -> Word (S (S (S (S n))))
 markDelete w = vinit w <+ high
