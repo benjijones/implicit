@@ -10,12 +10,12 @@ import Lava.Recipe
 import Lava.Generic
 import Lava.Bit
 import Lava.Recipe
-import Lava.Prelude
+import Lava.Ram
 
 data LetReplacer m n =
     LetReplacer {
       reference :: Reg n,
-      contents :: Reg (S (S (S (S n)))),
+      contents :: Reg (S (S (S (S (S n))))),
       state :: Reg N2,
       -- 0 : store let binder and delete
       -- 1 : store let contents and delete
@@ -23,8 +23,8 @@ data LetReplacer m n =
       -- 2 : replace LetRef and delete
       -- 3 : finished
       address :: Reg m,
-      memory :: Word (S (S (S (S n)))),
-      writeData :: Sig (S (S (S (S n)))),
+      memory :: Word (S (S (S (S (S n))))),
+      writeData :: Sig (S (S (S (S (S n))))),
       writeEn :: Sig N1
     } deriving Show
 
@@ -62,17 +62,17 @@ newLetReplacer program = do
 
 letReplace :: (N n, N m) => LetReplacer m n -> Recipe
 letReplace lr = Seq [
-    lr!bindReference
-  , lr!bindContents
+    lr!bindLetReference
+  , lr!bindLetContents
   , lr!replaceLet
-  , lr!unbind
+  , lr!unbindLet
   , lr!incrementAddress
   , lr!state!val === 3 |> lr!address <== 0
   , Tick
   ]
 
-bindReference :: (N m, N n) => LetReplacer n m -> Recipe
-bindReference lr = lr!state!val!isUnbound <&> lr!memory!isLet |>
+bindLetReference :: (N m, N n) => LetReplacer n m -> Recipe
+bindLetReference lr = lr!state!val!isUnbound <&> lr!memory!isLet |>
       Seq [
         lr!reference <== lr!memory!contentBits
       , lr!writeData <== lr!memory!markDelete
@@ -80,8 +80,8 @@ bindReference lr = lr!state!val!isUnbound <&> lr!memory!isLet |>
       , lr!state <== 1
       ]
 
-bindContents :: (N m, N n) => LetReplacer n m -> Recipe
-bindContents lr = lr!state!val!isBinding |>
+bindLetContents :: (N m, N n) => LetReplacer n m -> Recipe
+bindLetContents lr = lr!state!val!isBinding |>
   Seq [
     lr!memory!isIn!inv |> Seq [
       lr!contents <== lr!memory
@@ -103,8 +103,8 @@ replaceLet lr = lr!state!val!isBound <&> lr!memory!isLetRef |>
       , lr!writeEn <== 1
       ]
 
-unbind :: (N m, N n) => LetReplacer n m -> Recipe
-unbind lr = lr!state!val!isBound <&> lr!memory!isUnLet |>
+unbindLet :: (N m, N n) => LetReplacer n m -> Recipe
+unbindLet lr = lr!state!val!isBound <&> lr!memory!isUnLet |>
         lr!reference!val === lr!memory!contentBits |>
           Seq [
             lr!writeData <== lr!memory!markDelete

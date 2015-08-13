@@ -1,57 +1,82 @@
+{-# LANGUAGE NamedFieldPuns #-}
 module Implicit.CaseReducer where
 
 import Implicit.Atom
+import qualified Implicit.EvaluationMemory as EM
 
 import Lava.Bit
 import Lava.Recipe
 import Lava.Vector
 import Lava.Word
 import Lava.Generic
+import Lava.Ram
 
-data CaseReducer n =
+data CaseReducer m n =
     CaseReducer {
-      reference  :: Reg (S (S (S (S n)))),
-      occupied   :: Reg N1,
-      address    :: Sig (S (S (S (S n)))),
-      readValue  :: Word (S (S (S (S n)))),
-      writeValue :: Sig (S (S (S (S n))))
+      reference  :: Reg n,
+      contents :: Reg (S (S (S (S (S n))))),
+      state   :: Reg N2,
+      -- 0 : store case reference and delete
+      -- 1 : store scrutinee and delete
+      -- 2 : compare case
+      address    :: Reg m,
+      memory  :: Word (S (S (S (S (S n))))),
+      writeData :: Sig (S (S (S (S (S n))))),
+      writeEn :: Sig N1
     }
 
-newCaseReducer :: (N n) => New (CaseReducer n)
-newCaseReducer = do
-  ref <- newReg
-  occ <- newReg
+newCaseReducer :: (N m, N n) => [Integer] -> New (CaseReducer m n)
+newCaseReducer program = do
+  reference <- newReg
+  contents <- newReg
+  state <- newReg
+  address <- newReg
 
-  addr <- newSig
-  write <- newSig
+  writeData <- newSig
+  writeEn <- newSig
+
+  let ramInputs = RamInputs {
+        ramData = writeData!val,
+        ramAddress = address!val,
+        ramWrite = writeEn!val!vhead
+      }
+      memory = EM.evaluationMemory ramInputs program
 
   return $ CaseReducer {
-    reference = ref,
-    occupied = occ,
-    address = addr,
-    readValue = delay (low +> low +> low +> high +> vrepeat low) (vrepeat low),
-    writeValue = write
+    reference,
+    contents,
+    state,
+    address,
+    memory,
+    writeData,
+    writeEn
   }
 
-caseReduce :: (N n) => CaseReducer n -> Recipe
-caseReduce cr =
-  While (cr!occupied!val!vhead!inv) $
-  Seq [
-  --cr!occupied!val!vhead <&> cr!readValue === cr!reference!val |>
-  cr!occupied!val!vhead!inv <&> cr!readValue!isCase |>
-    Seq [
-      cr!incrementAddress
-    , Tick
-    , cr!readValue!isData |>
-      Seq [
-        cr!reference <== cr!readValue
-      , cr!occupied <== 1
-      ]
-    ]
-  , Tick
+caseReduce :: (N m, N n) => CaseReducer m n -> Recipe
+caseReduce cr = Seq [
+    cr!bindCaseReference
+  , cr!bindCaseContents
+  , cr!incrementAddress
   ]
 
-deleteArm :: (N n) => CaseReducer n -> Recipe
+bindCaseReference :: (N n) => CaseReducer m n -> Recipe
+bindCaseReference cr = cr!state!val === 0 <&> cr!memory!isCase |>
+  Seq [
+    cr!reference <== cr!memory!contentBits
+  , cr!writeData <== cr!memory!markDelete
+  , cr!writeEn <== 1
+  , cr!state <== 1
+  ]
+
+bindCaseContents :: (N m, N n) => CaseReducer m n -> Recipe
+bindCaseContents cr = cr!state!val === 1 |>
+  Seq [
+    cr!contents <== cr!memory
+  , cr!writeData <== cr!memory!markDelete
+  , cr!writeEn <== 1
+  ]
+
+{-deleteArm :: (N n) => CaseReducer m n -> Recipe
 deleteArm cr =
   Seq [
     While (cr!readValue!isUnArm!inv) $
@@ -61,8 +86,8 @@ deleteArm cr =
       , cr!incrementAddress
     ]
   , cr!writeValue <== cr!readValue!markDelete
-  ]
+  ]-}
 
-incrementAddress :: (N n) => CaseReducer n -> Recipe
+incrementAddress :: (N m, N n) => CaseReducer m n -> Recipe
 incrementAddress cr =
   cr!address <== cr!address!val + 1

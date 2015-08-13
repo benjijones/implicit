@@ -2,35 +2,40 @@ module Implicit.ExprToAtom where
 
 import Implicit.Expr as E
 import Implicit.Atom as A
+import Implicit.Context
 
 import Lava.Vector
 
-import Data.List (find)
-
 exprToAtoms :: (N n, Eq b) => Expr b -> [Atom n]
-exprToAtoms = exprToAtomsWithContext []
+exprToAtoms = result . exprToAtomsC
 
-exprToAtomsWithContext :: (N n, Eq b) => [(b, Integer)] -> Expr b -> [Atom n]
-exprToAtomsWithContext _ (E.Data val) = [A.Data val False]
+exprToAtomsC :: (N n, Eq b) => Expr b -> Context b [Atom n]
+exprToAtomsC (E.Data val) = return [A.Data val False]
 
-exprToAtomsWithContext c (E.Case scrut cases) =
-    A.Case False :
-    exprToAtomsWithContext c scrut ++
-    concatMap (\(pattern, expr) -> Arm (getData pattern) False :
-                         exprToAtomsWithContext c expr)
-              cases
+exprToAtomsC (E.Case scrut cases) = do
+  scrutAtoms <- exprToAtomsC scrut
+  caseId <- newCaseBinding
+  arms <- sequence . map caseToArm $ cases
+  return $
+    A.Case caseId False :
+    scrutAtoms ++
+    concat arms ++
+    [A.UnCase caseId False]
+  where caseToArm (pattern, expr) = do
+          expr'  <- exprToAtomsC expr
+          return $ Arm (getData pattern) False : expr'
 
-exprToAtomsWithContext context (E.Let bind bound expr) =
-    let uniqueId = unique . map snd $ context
-        newContext = (bind, uniqueId) : context in
-                         A.Let uniqueId False :
-                         exprToAtomsWithContext newContext bound ++
-                         A.In False :
-                         exprToAtomsWithContext newContext expr ++
-                         [A.UnLet uniqueId False]
-    where unique prevIds = if null prevIds then 0 else head prevIds + 1 -- NAIVE: FIX WHEN YOU FEEL UP TO IT
+exprToAtomsC (E.Let bind bound expr) = do
+  letBind <- newLetBinding bind
+  boundAtoms <- exprToAtomsC bound
+  exprAtoms <- exprToAtomsC expr
+  return $ A.Let letBind False :
+           boundAtoms ++
+           A.In False :
+           exprAtoms ++
+           [A.UnLet letBind False]
 
-exprToAtomsWithContext context (E.LetRef bind) =
-    case find ((== bind) . fst) context of
-        Just (_, w) -> [A.LetRef w False]
-        Nothing -> error "LetRef to unknown reference"
+exprToAtomsC (E.LetRef bind) = do
+    bind' <- getLetBinding bind
+    return [A.LetRef bind' False]
+--exprToAtomsWithContext a b = undefined

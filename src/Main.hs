@@ -6,6 +6,7 @@ import qualified Implicit.Atom as A
 import Implicit.LetReplacer
 import Implicit.EvaluationMemory
 import Implicit.Processor
+import Implicit.Examples
 
 import Lava.Vector
 import Lava.Binary
@@ -18,9 +19,8 @@ import Lava.Word
 
 main :: IO ()
 main = do
-  let exampleProgram = E.Let "x" (E.Data 1) (E.LetRef "x")
-      atoms :: [A.Atom N5]
-      atoms = exprToAtoms exampleProgram
+  let atoms :: [A.Atom N5]
+      atoms = exprToAtoms exampleCase
 
       program = map A.atomToInteger atoms
 
@@ -30,3 +30,5 @@ main = do
       result = simRecipe newProc (processor 0) (memory . letReplacer)
   mapM_ print atoms
   print (A.wordToAtom result)
+  --print exampleContext
+
