@@ -18,7 +18,7 @@ data CaseReducer m n =
       state   :: Reg N2,
       -- 0 : store case reference and delete
       -- 1 : store scrutinee and delete
-      -- 2 : compare case
+      -- 2 : compare case==
       address    :: Reg m,
       memory  :: Word (S (S (S (S (S n))))),
       writeData :: Sig (S (S (S (S (S n))))),

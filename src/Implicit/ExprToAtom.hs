@@ -15,15 +15,19 @@ exprToAtomsC (E.Data val) = return [A.Data val False]
 exprToAtomsC (E.Case scrut cases) = do
   scrutAtoms <- exprToAtomsC scrut
   caseId <- newCaseBinding
-  arms <- sequence . map caseToArm $ cases
+  arms <- sequence . map (caseToArm caseId) $ cases
   return $
     A.Case caseId False :
     scrutAtoms ++
     concat arms ++
     [A.UnCase caseId False]
-  where caseToArm (pattern, expr) = do
+  where caseToArm caseId (pattern, expr) = do
           expr'  <- exprToAtomsC expr
-          return $ Arm (getData pattern) False : expr'
+          pattern' <- exprToAtomsC pattern
+          return $ Arm caseId False :
+                   pattern' ++
+                   Arrow False :
+                   expr'
 
 exprToAtomsC (E.Let bind bound expr) = do
   letBind <- newLetBinding bind
