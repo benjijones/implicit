@@ -3,7 +3,8 @@ module Main where
 import qualified Implicit.Expr as E
 import Implicit.ExprToAtom
 import qualified Implicit.Atom as A
-import Implicit.LetReplacer
+import Implicit.LetReplacer as LR
+import Implicit.CaseReducer as CR
 import Implicit.EvaluationMemory
 import Implicit.Processor
 import Implicit.Examples
@@ -27,8 +28,11 @@ main = do
       newProc :: New Processor
       newProc = newProcessor program
 
-      result = simRecipe newProc (processor 0) (memory . letReplacer)
+      results = map (\x -> simRecipe newProc (processor x) (\z -> ((CR.memory $ caseReducer z), (val . CR.address $ caseReducer z)))) [0..15]
   mapM_ print atoms
-  print (A.wordToAtom result)
+  putStrLn "--------------"
+  mapM_ (\(a,b) -> putStrLn $ show (b) ++ " ---> " ++ show (A.wordToAtom a)) results
+
+  --mapM_ print results
   --print exampleContext
 

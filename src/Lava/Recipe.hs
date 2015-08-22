@@ -44,6 +44,7 @@ module Lava.Recipe
 
     -- * Simulating recipes
   , simRecipe
+  , time
   ) where
 
 import Lava

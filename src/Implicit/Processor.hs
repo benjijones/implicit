@@ -37,11 +37,13 @@ processor :: Integer -> Processor -> Recipe
 processor finalAddress p =
   Seq [
     Tick
-  , While (p!letReplacer!LR.state!val =/= 3 <|> p!letReplacer!LR.address!val =/= fromInteger finalAddress) $
-    Seq [
+  , While (p!cycles!val =/= 15) $
+    Par [
       p!letReplacer!letReplace
     , p!caseReducer!caseReduce
     , p!cycles <== p!cycles!val + 1
     , Tick
     ]
+  , p!caseReducer!CR.address <== fromInteger finalAddress
+  , Tick
   ]

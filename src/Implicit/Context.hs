@@ -61,4 +61,4 @@ bindingIndex (LetBinding _ n) = n
 bindingIndex (CaseBinding m)  = m
 
 nextId :: [Integer] -> Integer
-nextId prevIds = if null prevIds then 0 else head prevIds + 1
+nextId prevIds = if null prevIds then 1 else head prevIds + 1

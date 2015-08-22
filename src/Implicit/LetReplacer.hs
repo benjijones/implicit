@@ -67,7 +67,7 @@ letReplace lr = Seq [
   , lr!replaceLet
   , lr!unbindLet
   , lr!incrementAddress
-  , lr!state!val === 3 |> lr!address <== 0
+  --, lr!state!val === 3 |> lr!address <== 0
   , Tick
   ]
 

@@ -60,6 +60,8 @@ wordToAtom :: (N n) => Word (S (S (S (S (S n))))) -> Atom n
 wordToAtom w
   | bitToBool (isData w) = Data (wordToInt . contentBits $ w) (isDeleted w)
   | bitToBool (isCase w) = Case (wordToInt . contentBits $ w) (isDeleted w)
+  | bitToBool (isArm w) = Arm (wordToInt . contentBits $ w) (isDeleted w)
+  | bitToBool (isArrow w) = Arrow (isDeleted w)
   | bitToBool (isUnCase w) = UnCase (wordToInt . contentBits $ w) (isDeleted w)
   | bitToBool (isLet w) = Let (wordToInt . contentBits $ w) (isDeleted w)
   | bitToBool (isIn w) = In (isDeleted w)
@@ -96,5 +98,5 @@ isUnLet = (=== 8) . typeBits
 isDeleted :: Word (S n) -> Bool
 isDeleted = bitToBool . vhead
 
-markDelete :: (N n) => Word (S (S (S (S n)))) -> Word (S (S (S (S n))))
+markDelete :: (N n) => Word (S n) -> Word (S n)
 markDelete w = high +> vtail w
