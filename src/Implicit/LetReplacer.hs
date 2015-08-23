@@ -10,7 +10,6 @@ import Lava.Recipe
 import Lava.Generic
 import Lava.Bit
 import Lava.Recipe
-import Lava.Ram
 
 data LetReplacer m n =
     LetReplacer {
@@ -22,42 +21,27 @@ data LetReplacer m n =
       --     delete trailing In
       -- 2 : replace LetRef and delete
       -- 3 : finished
-      address :: Reg m,
-      memory :: Word (S (S (S (S (S n))))),
-      writeData :: Sig (S (S (S (S (S n))))),
-      writeEn :: Sig N1
+      delete :: Sig N1,
+      replace :: Sig N1,
+      memoryIn :: Word (S (S (S (S (S n)))))
     } deriving Show
 
-newLetReplacer :: (N m, N n) => [Integer] -> New (LetReplacer m n)
-newLetReplacer program = do
+newLetReplacer :: (N m, N n) => Word (S (S (S (S (S n))))) -> New (LetReplacer m n)
+newLetReplacer mem = do
   reference <- newReg
   contents <- newReg
   state <- newReg
-  address <- newReg
 
-  writeData <- newSig
-  writeEn <- newSig
-
-      --ramInputs :: RamInputs (S (S (S (S n)))) m
-  let ramInputs = RamInputs {
-        ramData = writeData!val,
-        ramAddress = address!val,
-        ramWrite = writeEn!val!vhead
-      }
-      memory = EM.evaluationMemory ramInputs program
-
-      --writeEn = writeEnable (state!val) (reference!val) memory
-
-      --state = delay 0 (nextState state (reference!val) memory)
+  delete <- newSig
+  replace <- newSig
 
   return $ LetReplacer {
     reference,
     contents,
     state,
-    address,
-    memory,
-    writeData,
-    writeEn
+    memoryIn = mem,
+    delete,
+    replace
   }
 
 letReplace :: (N n, N m) => LetReplacer m n -> Recipe
@@ -66,60 +50,47 @@ letReplace lr = Seq [
   , lr!bindLetContents
   , lr!replaceLet
   , lr!unbindLet
-  , lr!incrementAddress
-  --, lr!state!val === 3 |> lr!address <== 0
-  , Tick
   ]
 
 bindLetReference :: (N m, N n) => LetReplacer n m -> Recipe
-bindLetReference lr = lr!state!val!isUnbound <&> lr!memory!isLet |>
+bindLetReference lr = lr!isUnbound <&> lr!memoryIn!isLet |>
       Seq [
-        lr!reference <== lr!memory!contentBits
-      , lr!writeData <== lr!memory!markDelete
-      , lr!writeEn <== 1
+        lr!reference <== lr!memoryIn!contentBits
+      , lr!delete <== 1
       , lr!state <== 1
       ]
 
 bindLetContents :: (N m, N n) => LetReplacer n m -> Recipe
-bindLetContents lr = lr!state!val!isBinding |>
+bindLetContents lr = lr!isBinding |>
   Seq [
-    lr!memory!isIn!inv |> Seq [
-      lr!contents <== lr!memory
-    , lr!writeData <== lr!memory!markDelete
-    , lr!writeEn <== 1
+    lr!memoryIn!isIn!inv |> Seq [
+      lr!contents <== lr!memoryIn
+    , lr!delete <== 1
     ]
-  , lr!memory!isIn |> Seq [
-      lr!writeData <== lr!memory!markDelete
-    , lr!writeEn <== 1
+  , lr!memoryIn!isIn |> Seq [
+      lr!delete <== 1
     , lr!state <== 2
     ]
   ]
 
 
 replaceLet :: (N m, N n) => LetReplacer n m -> Recipe
-replaceLet lr = lr!state!val!isBound <&> lr!memory!isLetRef |>
-      Seq [
-        lr!writeData <== lr!contents!val
-      , lr!writeEn <== 1
-      ]
+replaceLet lr = lr!isBound <&> lr!memoryIn!isLetRef |>
+        lr!replace <== 1
 
 unbindLet :: (N m, N n) => LetReplacer n m -> Recipe
-unbindLet lr = lr!state!val!isBound <&> lr!memory!isUnLet |>
-        lr!reference!val === lr!memory!contentBits |>
+unbindLet lr = lr!isBound <&> lr!memoryIn!isUnLet |>
+        lr!reference!val === lr!memoryIn!contentBits |>
           Seq [
-            lr!writeData <== lr!memory!markDelete
+            lr!delete <== 1
           , lr!state <== 3
           ]
 
-isUnbound :: Word N2 -> Bit
-isUnbound = (=== 0)
+isUnbound :: LetReplacer m n -> Bit
+isUnbound = (=== 0) . val . state
 
-isBinding :: Word N2 -> Bit
-isBinding = (=== 1)
+isBinding :: LetReplacer m n -> Bit
+isBinding = (=== 1) . val . state
 
-isBound :: Word N2 -> Bit
-isBound = (=== 2)
-
-incrementAddress :: (N m, N n) => LetReplacer m n -> Recipe
-incrementAddress lr =
-  lr!address <== lr!address!val + 1
+isBound :: LetReplacer m n -> Bit
+isBound = (=== 2) . val . state

@@ -2,6 +2,7 @@
 module Implicit.Context where
 
 import Data.List (find)
+import Control.Applicative
 
 newtype Context b a = Context { runContext :: [Binding b] -> (a, [Binding b]) }
 

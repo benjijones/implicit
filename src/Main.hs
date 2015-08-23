@@ -28,10 +28,11 @@ main = do
       newProc :: New Processor
       newProc = newProcessor program
 
-      results = map (\x -> simRecipe newProc (processor x) (\z -> ((CR.memory $ caseReducer z), (val . CR.address $ caseReducer z)))) [0..15]
+      results = map (\x -> simRecipe newProc (processor x) extract) [0..15]
+      extract proc = (val . address $ proc, memory proc)
   mapM_ print atoms
   putStrLn "--------------"
-  mapM_ (\(a,b) -> putStrLn $ show (b) ++ " ---> " ++ show (A.wordToAtom a)) results
+  mapM_ (\(a,b) -> putStrLn $ show (a) ++ " ---> " ++ show (A.wordToAtom b)) results
 
   --mapM_ print results
   --print exampleContext
