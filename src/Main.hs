@@ -21,18 +21,18 @@ import Lava.Word
 main :: IO ()
 main = do
   let atoms :: [A.Atom N5]
-      atoms = exprToAtoms exampleCase
+      atoms = exprToAtoms exampleLet
 
       program = map A.atomToInteger atoms
 
       newProc :: New Processor
       newProc = newProcessor program
 
-      results = map (\x -> simRecipe newProc (processor x) extract) [0..15]
-      extract proc = (val . address $ proc, memory proc)
+      results = concatMap (\cycles -> map (\addr -> simRecipe newProc (processor cycles addr) extract) [0..10]) [15]
+      extract proc = (val . address $ proc, memory proc, CR.state . caseReducer $ proc)
   mapM_ print atoms
   putStrLn "--------------"
-  mapM_ (\(a,b) -> putStrLn $ show (a) ++ " ---> " ++ show (A.wordToAtom b)) results
+  mapM_ (\(a,b,c) -> putStrLn $ "State: " ++ show (c) ++ " Address: " ++ show a ++ " Memory: " ++ show (A.wordToAtom b)) results
 
   --mapM_ print results
   --print exampleContext

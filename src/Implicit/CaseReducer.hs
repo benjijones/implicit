@@ -15,6 +15,7 @@ data CaseReducer m n =
       reference  :: Reg n,
       contents :: Reg (S (S (S (S (S n))))),
       state   :: Reg N3,
+--      newState :: Sig N3,
       -- 0 : store case reference and delete
       -- 1 : store scrutinee and delete
       -- 2 : compare case
@@ -34,6 +35,7 @@ newCaseReducer mem = do
 
   --writeData <- newSig
   --writeEn <- newSig
+--  newState <- newSig
   delete <- newSig
 
 {-  let ramInputs = RamInputs {
@@ -47,6 +49,7 @@ newCaseReducer mem = do
     reference,
     contents,
     state,
+--    newState,
     --address,
     memoryIn = mem,
     delete
@@ -58,9 +61,12 @@ caseReduce :: (N m, N n) => CaseReducer m n -> Recipe
 caseReduce cr = Seq [
     cr!bindCaseReference
   , cr!bindCaseContents
-  , cr!trimArms
+  , cr!trimArm
+  , cr!compareArm
   , cr!deleteArm
+  , cr!skipArm
   , cr!unbindCase
+--  , cr!updateState
   ]
 
 bindCaseReference :: (N n) => CaseReducer m n -> Recipe
@@ -72,35 +78,60 @@ bindCaseReference cr = cr!isUnbound <&> cr!memoryIn!isCase |>
   ]
 
 bindCaseContents :: (N m, N n) => CaseReducer m n -> Recipe
-bindCaseContents cr = cr!state!val === 1 |>
+bindCaseContents cr = cr!isBinding |>
   Seq [
     cr!contents <== cr!memoryIn
   , cr!delete <== 1
   , cr!state <== 2
   ]
 
-trimArms :: (N m, N n) => CaseReducer m n -> Recipe
-trimArms cr = cr!state!val === 2 |>
+trimArm :: (N m, N n) => CaseReducer m n -> Recipe
+trimArm cr = cr!isBound |>
   Seq [
       cr!delete <== 1
     , cr!memoryIn!isArm <&> cr!reference!val === cr!memoryIn!contentBits |>
         cr!state <== 3
     ]
 
+compareArm :: (N m, N n) => CaseReducer m n -> Recipe
+compareArm cr = cr!isCompare |>
+  Seq [
+    cr!delete <== 1
+  , cr!contents!val === cr!memoryIn |>
+      cr!state <== 5
+  , cr!contents!val === cr!memoryIn |>
+      cr!state <== 4
+  ]
+
 deleteArm :: (N m, N n) => CaseReducer m n -> Recipe
-deleteArm cr = cr!state!val === 3 |>
-  cr!memoryIn!isArm <&> cr!reference!val === cr!memoryIn!contentBits |>
+deleteArm cr = cr!isDelete |>
+  Seq [
+    cr!delete <== 1
+  , cr!memoryIn!isArm <&> cr!reference!val === cr!memoryIn!contentBits |>
+      cr!state <== 3
+  ]
+
+skipArm :: (N m, N n) => CaseReducer m n -> Recipe
+skipArm cr = cr!isSkip |>
+  Seq [
+    cr!memoryIn!isArrow <&> cr!reference!val === cr!memoryIn!contentBits |>
+      cr!delete <== 1
+  , cr!memoryIn!isArm <&> cr!reference!val === cr!memoryIn!contentBits |>
     Seq [
       cr!delete <== 1
-    , cr!state <== 2
+    , cr!state <== 3
     ]
+  ]
 
 unbindCase :: (N m, N n) => CaseReducer m n -> Recipe
 unbindCase cr = cr!memoryIn!isUnCase <&> cr!reference!val === cr!memoryIn!contentBits |>
   Seq [
     cr!delete <== 1
-  , cr!state <== 4
+  , cr!state <== 0
   ]
+
+--updateState :: (N m, N n) => CaseReducer m n -> Recipe
+--updateState cr = cr!state <== cr!newState!val
 
 isUnbound :: CaseReducer m n -> Bit
 isUnbound = (=== 0) . val . state
@@ -111,7 +142,11 @@ isBinding = (=== 1) . val . state
 isBound :: CaseReducer m n -> Bit
 isBound = (=== 2) . val . state
 
+isCompare :: CaseReducer m n -> Bit
+isCompare = (=== 3) . val . state
 
-{-incrementAddress :: (N m, N n) => CaseReducer m n -> Recipe
-incrementAddress cr =
-  cr!address <== cr!address!val + 1-}
+isDelete :: CaseReducer m n -> Bit
+isDelete = (=== 4) . val . state
+
+isSkip :: CaseReducer m n -> Bit
+isSkip = (=== 5) . val . state

@@ -76,15 +76,15 @@ bindLetContents lr = lr!isBinding |>
 
 replaceLet :: (N m, N n) => LetReplacer n m -> Recipe
 replaceLet lr = lr!isBound <&> lr!memoryIn!isLetRef |>
-        lr!replace <== 1
+  lr!replace <== 1
 
 unbindLet :: (N m, N n) => LetReplacer n m -> Recipe
 unbindLet lr = lr!isBound <&> lr!memoryIn!isUnLet |>
-        lr!reference!val === lr!memoryIn!contentBits |>
-          Seq [
-            lr!delete <== 1
-          , lr!state <== 3
-          ]
+  lr!reference!val === lr!memoryIn!contentBits |>
+    Seq [
+      lr!delete <== 1
+     , lr!state <== 3
+    ]
 
 isUnbound :: LetReplacer m n -> Bit
 isUnbound = (=== 0) . val . state

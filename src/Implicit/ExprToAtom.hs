@@ -26,7 +26,7 @@ exprToAtomsC (E.Case scrut cases) = do
           pattern' <- exprToAtomsC pattern
           return $ Arm caseId False :
                    pattern' ++
-                   Arrow False :
+                   Arrow caseId False :
                    expr'
 
 exprToAtomsC (E.Let bind bound expr) = do

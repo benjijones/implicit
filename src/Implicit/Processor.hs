@@ -24,7 +24,6 @@ data Processor =
 
     deleteBit :: Bit,
     cycles :: Reg N4
-    --finished :: Sig N1
   }
 
 newProcessor :: [Integer] -> New Processor
@@ -45,7 +44,6 @@ newProcessor program = do
   letReplacer <- newLetReplacer memory
   caseReducer <- newCaseReducer memory
   cycles <- newReg
-  --finished <- newSig
 
   return $ Processor {
     memory,
@@ -57,14 +55,14 @@ newProcessor program = do
     deleteBit = letReplacer!LR.delete!val!vhead
             <|> caseReducer!CR.delete!val!vhead,
     cycles
-    --finished
   }
 
-processor :: Integer -> Processor -> Recipe
-processor finalAddress p =
+processor :: Integer -> Integer -> Processor -> Recipe
+processor numCycles finalAddress p =
   Seq [
     Tick
-  , While (p!cycles!val =/= 15) $
+  , Tick
+  , While (p!cycles!val =/= fromInteger numCycles) $
     Seq [
       p!letReplacer!letReplace
     , p!caseReducer!caseReduce
@@ -74,6 +72,7 @@ processor finalAddress p =
     ]
     , p!cycles <== p!cycles!val + 1
     , p!address <== p!address!val + 1
+    , Tick
     , Tick
     ]
   , p!address <== fromInteger finalAddress

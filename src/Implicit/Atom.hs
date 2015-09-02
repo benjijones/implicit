@@ -12,7 +12,7 @@ data Atom a =
   -- branching
   | Case Integer Deleted
   | Arm Integer Deleted
-  | Arrow Deleted
+  | Arrow Integer Deleted
   | UnCase Integer Deleted
 
   -- let expressions
@@ -32,7 +32,7 @@ atomContents :: Atom a -> Integer
 atomContents (Data val _)   = val
 atomContents (Case ref _)   = ref
 atomContents (Arm arm _)    = arm
-atomContents (Arrow _)      = 0
+atomContents (Arrow ref _)  = ref
 atomContents (UnCase ref _) = ref
 atomContents (Let ref _)    = ref
 atomContents (In _)         = 0
@@ -43,7 +43,7 @@ typeEncoding :: Atom a -> Integer
 typeEncoding (Data _ _)   = 0
 typeEncoding (Case _ _)   = 1
 typeEncoding (Arm _ _)    = 2
-typeEncoding (Arrow _)    = 3
+typeEncoding (Arrow _ _)  = 3
 typeEncoding (UnCase _ _) = 4
 typeEncoding (Let _ _)    = 5
 typeEncoding (In _)       = 6
@@ -61,7 +61,7 @@ wordToAtom w
   | bitToBool (isData w) = Data (wordToInt . contentBits $ w) (isDeleted w)
   | bitToBool (isCase w) = Case (wordToInt . contentBits $ w) (isDeleted w)
   | bitToBool (isArm w) = Arm (wordToInt . contentBits $ w) (isDeleted w)
-  | bitToBool (isArrow w) = Arrow (isDeleted w)
+  | bitToBool (isArrow w) = Arrow (wordToInt . contentBits $ w) (isDeleted w)
   | bitToBool (isUnCase w) = UnCase (wordToInt . contentBits $ w) (isDeleted w)
   | bitToBool (isLet w) = Let (wordToInt . contentBits $ w) (isDeleted w)
   | bitToBool (isIn w) = In (isDeleted w)
