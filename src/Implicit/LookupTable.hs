@@ -12,10 +12,10 @@ data LookupTable =
   }
 
 newLookupTable :: Word N11 -> New LookupTable
-newLookupTable address = do
+newLookupTable address' = do
   regs <- sequence $ repeat $ newReg
 
   return $ LookupTable {
     entries = vec $ map val regs,
-    address = vtake n3 address
+    address = vlastN n3 address'
   }

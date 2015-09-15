@@ -34,9 +34,6 @@ main = do
   putStrLn "--------------"
   mapM_ (\(a,b,c) -> putStrLn $ "State: " ++ show (c) ++ " Address: " ++ show a ++ " Memory: " ++ show (A.wordToAtom b)) results
 
-  let x =  vlastN n2 $ vecn n2 [1..2] in
-
-      print x
   --mapM_ print results
   --print exampleContext
 

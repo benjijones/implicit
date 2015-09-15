@@ -1297,7 +1297,7 @@ vtail (Vec as) = Vec (tail as)
 vlast :: Vec (S n) a -> a
 vlast (Vec as) = last as
 
-vlastN :: (N n, Add n m o) => n -> Vec o a -> Vec m a
+vlastN :: (N n, Less n m) => n -> Vec m a -> Vec n a
 vlastN a (Vec as) = Vec $ snd $ splitAt (length as - value a) as
 
 vinit :: Vec (S n) a -> Vec n a
