@@ -3,6 +3,7 @@ module Implicit.LetReplacer where
 
 import Implicit.Atom
 import qualified Implicit.EvaluationMemory as EM
+import Implicit.LetMemory
 
 import Lava.Word
 import Lava.Vector
@@ -11,10 +12,10 @@ import Lava.Generic
 import Lava.Bit
 import Lava.Recipe
 
-data LetReplacer m n =
+data LetReplacer addrN dataN =
     LetReplacer {
-      reference :: Reg n,
-      contents :: Reg (S (S (S (S (S n))))),
+      reference :: Reg dataN,
+      contents :: Reg (S (S (S (S (S dataN))))),
       state :: Reg N2,
       -- 0 : store let binder and delete
       -- 1 : store let contents and delete
@@ -23,28 +24,31 @@ data LetReplacer m n =
       -- 3 : finished
       delete :: Sig N1,
       replace :: Sig N1,
-      memoryIn :: Word (S (S (S (S (S n)))))
+      replaceWith :: Sig (S (S (S (S (S dataN))))),
+      memoryIn :: Word (S (S (S (S (S dataN)))))
     } deriving Show
 
-newLetReplacer :: (N m, N n) => Word (S (S (S (S (S n))))) -> New (LetReplacer m n)
-newLetReplacer mem = do
+newLetReplacer :: (N addrN, N dataN) => Word (S (S (S (S (S dataN))))) -> New (LetReplacer addrN dataN)
+newLetReplacer memoryIn = do
   reference <- newReg
   contents <- newReg
   state <- newReg
 
   delete <- newSig
   replace <- newSig
+  replaceWith <- newSigDef (val contents)
 
   return $ LetReplacer {
     reference,
     contents,
     state,
-    memoryIn = mem,
     delete,
-    replace
+    replace,
+    replaceWith,
+    memoryIn
   }
 
-letReplace :: (N n, N m) => LetReplacer m n -> Recipe
+letReplace :: (N m, N n) => LetReplacer m n -> Recipe
 letReplace lr = Seq [
     lr!bindLetReference
   , lr!bindLetContents
@@ -52,7 +56,7 @@ letReplace lr = Seq [
   , lr!unbindLet
   ]
 
-bindLetReference :: (N m, N n) => LetReplacer n m -> Recipe
+bindLetReference :: (N m, N n) => LetReplacer m n -> Recipe
 bindLetReference lr = lr!isUnbound <&> lr!memoryIn!isLet |>
       Seq [
         lr!reference <== lr!memoryIn!contentBits
@@ -83,7 +87,7 @@ unbindLet lr = lr!isBound <&> lr!memoryIn!isUnLet |>
   lr!reference!val === lr!memoryIn!contentBits |>
     Seq [
       lr!delete <== 1
-     , lr!state <== 3
+    , lr!state <== 3
     ]
 
 isUnbound :: LetReplacer m n -> Bit

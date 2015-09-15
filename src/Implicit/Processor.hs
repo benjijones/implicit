@@ -5,6 +5,7 @@ import Implicit.Atom
 import Implicit.EvaluationMemory
 import Implicit.LetReplacer as LR
 import Implicit.CaseReducer as CR
+import Implicit.BitWidths
 
 import Lava.Bit
 import Lava.Vector
@@ -14,13 +15,13 @@ import Lava.Ram
 
 data Processor =
   Processor {
-    memory :: EvaluationMemory N11 N10,
-    address :: Reg N11,
-    writeData :: Sig N10,
+    memory :: EvaluationMemory AddressN WordN,
+    address :: Reg AddressN,
+    writeData :: Sig WordN,
     writeEn :: Sig N1,
 
-    letReplacer :: LetReplacer N11 N5,
-    caseReducer :: CaseReducer N11 N5,
+    letReplacer :: LetReplacer AddressN DataN,
+    caseReducer :: CaseReducer AddressN DataN,
 
     deleteBit :: Bit,
     cycles :: Reg N4
@@ -68,6 +69,10 @@ processor numCycles finalAddress p =
     , p!caseReducer!caseReduce
     , p!deleteBit |> Seq [
         p!writeData <== p!memory!markDelete
+      , p!writeEn <== 1
+    ]
+    , p!deleteBit!inv <&> p!letReplacer!replace!val!vhead |> Seq [
+        p!writeData <== p!letReplacer!replaceWith!val
       , p!writeEn <== 1
     ]
     , p!cycles <== p!cycles!val + 1

@@ -3,14 +3,27 @@ module Implicit.Examples where
 import Implicit.Expr
 import Implicit.Context
 
-exampleLet :: Expr String
-exampleLet = Let "x" (Data 1) (LetRef "x")
+basicLet :: Expr String
+basicLet = Let "x" (Data 1) (LetRef "x")
 
-exampleCase :: Expr String
-exampleCase = Case (Data 1)
+basicCase :: Expr String
+basicCase = Case (Data 1)
                 [ (Data 0, Data 2)
                 , (Data 1, Data 2)
                 ]
+
+caseInLet :: Expr String
+caseInLet = Let "x" (Data 1) $
+                     Case (Data 0)
+                       [ (Data 0, LetRef "x")
+                       , (Data 1, Data 2)
+                       ]
+
+letInCase :: Expr String
+letInCase = Case (Data 1)
+              [ (Data 0, Data 1)
+              , (Data 1, Let "x" (Data 3) (LetRef "x"))
+              ]
 
 exampleContext :: Context String Integer
 exampleContext = do

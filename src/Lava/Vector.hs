@@ -27,6 +27,7 @@ module Lava.Vector
   , vhead      -- :: Vec (S n) a -> a
   , vtail      -- :: Vec (S n) a -> Vec n a
   , vlast      -- :: Vec (S n) a -> a
+  , vlastN     -- :: (N n, Add n m o) => n -> Vec o a -> Vec m a
   , vinit      -- :: Vec (S n) a -> Vec n a
   , vlength    -- :: Vec n a -> Int
   , vmap       -- :: (a -> b) -> Vec n a -> Vec n b
@@ -1295,6 +1296,9 @@ vtail (Vec as) = Vec (tail as)
 
 vlast :: Vec (S n) a -> a
 vlast (Vec as) = last as
+
+vlastN :: (N n, Add n m o) => n -> Vec o a -> Vec m a
+vlastN a (Vec as) = Vec $ snd $ splitAt (length as - value a) as
 
 vinit :: Vec (S n) a -> Vec n a
 vinit (Vec as) = Vec (init as)
