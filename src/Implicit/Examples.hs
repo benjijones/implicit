@@ -1,7 +1,27 @@
 module Implicit.Examples where
 
+import qualified Implicit.Atom as A
+import Implicit.ExprToAtom
 import Implicit.Expr
 import Implicit.Context
+import Implicit.Processor
+
+import Lava.Vector
+import Lava.Recipe
+import Lava.Bit
+
+
+simulateProcessor :: (Generic a) => [Integer] -> [Integer] -> (Processor -> a) -> Expr String -> [a]
+simulateProcessor cycles address extract expr = let
+  atoms :: [A.Atom N5]
+  atoms = exprToAtoms expr
+
+  program = map A.atomToInteger atoms
+
+  newProc :: New Processor
+  newProc = newProcessor program in
+
+  [simRecipe newProc (processor cyc addr) extract | cyc <- cycles, addr <- address]
 
 basicLet :: Expr String
 basicLet = Let "x" (Data 1) (LetRef "x")

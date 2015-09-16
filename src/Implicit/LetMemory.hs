@@ -20,7 +20,6 @@ newLetMemory :: Word WordN -> New (LetMemory AddressN WordN)
 newLetMemory input = do
 
   offset <- newReg
-  
 
   let lookupTableInputs = RamInputs {
         ramData = offset!val,
@@ -28,6 +27,13 @@ newLetMemory input = do
         ramWrite = isLet input
       }
       lookupTable = ram [] Width9 lookupTableInputs
+      letMemoryInputs = RamInputs {
+        ramData = input,
+        ramAddress = lookupTable,
+        ramWrite = isLet input
+      }
+      output = ram [] Width9 letMemoryInputs
+
   return $ LetMemory {
     offset
   }
