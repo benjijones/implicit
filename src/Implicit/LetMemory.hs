@@ -4,36 +4,44 @@ module Implicit.LetMemory where
 import Implicit.BitWidths
 import Implicit.Atom
 
+import Lava.Bit
 import Lava.Recipe
 import Lava.Word
 import Lava.Vector
 import Lava.Ram
+import Lava.Generic
 
 
 data LetMemory m n =
   LetMemory {
+    input :: Word WordN,
+    enable :: Bit,
     output :: Word WordN,
-    offset :: Reg N4
+    offset :: Word N4
   }
 
-newLetMemory :: Word WordN -> New (LetMemory AddressN WordN)
-newLetMemory input = do
+newLetMemory :: Word WordN -> Bit -> LetMemory AddressN WordN
+newLetMemory input enable =
 
-  offset <- newReg
+  let update = (isLet input) <&> enable
+      offset = delay (0 :: Word N4) (update ? (offset + 1, 0))
 
-  let lookupTableInputs = RamInputs {
-        ramData = offset!val,
+      lookupTableInputs = RamInputs {
+        ramData = offset,
         ramAddress = contentBits input,
-        ramWrite = isLet input
+        ramWrite = isLet input <&> enable
       }
-      lookupTable = ram [] Width9 lookupTableInputs
+      lookupTable = ram [1] Width9 lookupTableInputs
       letMemoryInputs = RamInputs {
         ramData = input,
-        ramAddress = lookupTable,
-        ramWrite = isLet input
+        ramAddress = lookupTable + offset,
+        ramWrite = isLet input <&> enable
       }
-      output = ram [] Width9 letMemoryInputs
+      output = ram [0, 1] Width9 letMemoryInputs in
 
-  return $ LetMemory {
+  LetMemory {
+    input,
+    enable,
+    output,
     offset
   }
