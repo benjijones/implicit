@@ -36,4 +36,3 @@ instance N n => Num (Vec n Bit) where
 
 ofWidth :: Integral a => a -> Int -> [Bit]
 n `ofWidth` s = map boolToBit (intToSizedBin n s)
-

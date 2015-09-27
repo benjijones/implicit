@@ -17,27 +17,39 @@ data LetMemory m n =
     input :: Word WordN,
     enable :: Bit,
     output :: Word WordN,
-    offset :: Word N4
+    offset :: Word AddressN
   }
+
 
 newLetMemory :: Word WordN -> Bit -> LetMemory AddressN WordN
 newLetMemory input enable =
 
-  let update = (isLet input) <&> enable
-      offset = delay (0 :: Word N4) (update ? (offset + 1, 0))
+  let -- are we inside a let binding?
+      binding = delay 0  (isLet input) <|> (delay 0 binding <&> (inv (isIn input)))
+      -- are we unbinding?
+      unbinding = isUnLet input
+      -- which Let is currently selected in the lookup table
+      select = (isLet input <|> isUnLet input) ? (contentBits input, delay 0 select)
+      -- how far into a single Let
+      offset = binding ? (delay 0 offset + 1, 0)
+      -- pointer to next unused word in memory
+      -- TODO: decrease when unbinding Let (UnLet)
+      depth = binding ? (delay 0 depth + 1,
+              unbinding ? (lookupTable,
+              delay 0 depth))
 
       lookupTableInputs = RamInputs {
-        ramData = offset,
-        ramAddress = contentBits input,
-        ramWrite = isLet input <&> enable
+        ramData = depth,
+        ramAddress = select,
+        ramWrite = enable <&> isLet input
       }
-      lookupTable = ram [1] Width9 lookupTableInputs
+      lookupTable = ram [] Width9 lookupTableInputs
       letMemoryInputs = RamInputs {
         ramData = input,
         ramAddress = lookupTable + offset,
-        ramWrite = isLet input <&> enable
+        ramWrite = enable <&> binding
       }
-      output = ram [0, 1] Width9 letMemoryInputs in
+      output = ram [] Width9 letMemoryInputs in
 
   LetMemory {
     input,

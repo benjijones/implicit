@@ -29,6 +29,7 @@ main = do
   putStrLn "--------------"
   mapM_ (\(a,b,c) -> putStrLn $ "State: " ++ show (c) ++ " Address: " ++ show a ++ " Memory: " ++ show (A.wordToAtom b)) results
   -}
-  let letMemoryInput = delay (fromInteger . A.atomToInteger $ A.Let 0 False) (fromInteger . A.atomToInteger $ A.LetRef 0 False)
+  let letMemoryInput = delay (fromInteger . A.atomToInteger $ A.Let 0 False)
+                             (fromInteger . A.atomToInteger $ A.LetRef 0 False)
   mapM_ print . simulateN 5 . offset $ newLetMemory letMemoryInput 1
 
