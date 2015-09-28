@@ -19,11 +19,15 @@ data Atom a =
   | Let Integer Deleted
   | In Deleted
   | LetRef Integer Deleted
+  | LetRefPadding Deleted
   | UnLet Integer Deleted
 
   deriving Show
 
 type Deleted = Bool
+
+atomsToWord :: (N n) => [Atom n] -> Word n
+atomsToWord = foldr (\atm rest -> delay (fromInteger . atomToInteger $ atm) rest) 0
 
 atomToInteger :: Atom a -> Integer
 atomToInteger atom = 0 .|. (typeEncoding atom `shiftL` 1) .|. (atomContents atom `shiftL` 5)
@@ -37,6 +41,7 @@ atomContents (UnCase ref _) = ref
 atomContents (Let ref _)    = ref
 atomContents (In _)         = 0
 atomContents (LetRef ref _) = ref
+atomContents (LetRefPadding _) = 0
 atomContents (UnLet ref _)  = ref
 
 typeEncoding :: Atom a -> Integer
@@ -48,7 +53,8 @@ typeEncoding (UnCase _ _) = 4
 typeEncoding (Let _ _)    = 5
 typeEncoding (In _)       = 6
 typeEncoding (LetRef _ _) = 7
-typeEncoding (UnLet _ _)  = 8
+typeEncoding (LetRefPadding _) = 8
+typeEncoding (UnLet _ _)  = 9
 
 typeBits :: (N n) => Word (S (S (S (S (S n))))) -> Word N4
 typeBits = vtake n4 . vdrop n1
@@ -66,6 +72,7 @@ wordToAtom w
   | bitToBool (isLet w) = Let (wordToInt . contentBits $ w) (isDeleted w)
   | bitToBool (isIn w) = In (isDeleted w)
   | bitToBool (isLetRef w) = LetRef (wordToInt . contentBits $ w) (isDeleted w)
+  | bitToBool (isLetRefPadding w) = LetRefPadding (isDeleted w)
   | bitToBool (isUnLet w) = UnLet (wordToInt . contentBits $ w) (isDeleted w)
 
 isData :: (N n) => Word (S (S (S (S (S n))))) -> Bit
@@ -92,8 +99,11 @@ isIn = (=== 6) . typeBits
 isLetRef :: (N n) => Word (S (S (S (S (S n))))) -> Bit
 isLetRef = (=== 7) . typeBits
 
+isLetRefPadding :: (N n) => Word (S (S (S (S (S n))))) -> Bit
+isLetRefPadding = (=== 8) . typeBits
+
 isUnLet :: (N n) => Word (S (S (S (S (S n))))) -> Bit
-isUnLet = (=== 8) . typeBits
+isUnLet = (=== 9) . typeBits
 
 isDeleted :: Word (S n) -> Bool
 isDeleted = bitToBool . vhead
