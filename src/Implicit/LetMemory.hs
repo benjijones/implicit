@@ -39,6 +39,7 @@ newLetMemory input enable =
       -- which Let is currently selected in the lookup table
       select = (isLet input <|> isUnLet input <|> isLetRef input) ? (contentBits input, delay 0 select)
       -- how far into a particular Let or LetRef
+      
       offset = (binding <&> delay 0 binding) ?
                  (delay 0 offset + 1,
                  isLetRefPadding input ? (delay 0 offset + 1, 0))--(delay 0 binding <&> (inv (isIn input))) ? (delay 0 offset + 1, 0)

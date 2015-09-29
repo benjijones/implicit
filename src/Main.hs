@@ -43,5 +43,5 @@ main = do
                   , A.LetRef 2 False
                   , A.UnLet 2 False
                   , A.UnLet 1 False]
-  mapM_ print . simulateN 11 . (offset) $ newLetMemory letMemoryInput 1
+  mapM_ print . simulateN 11 . (depth) $ newLetMemory letMemoryInput 1
 
