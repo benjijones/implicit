@@ -9,6 +9,9 @@ import Implicit.Processor
 import Lava.Vector
 import Lava.Recipe
 import Lava.Bit
+import Lava.Word
+import Lava.Ram
+import Lava.Prelude
 
 
 simulateProcessor :: (Generic a) => [Integer] -> [Integer] -> (Processor -> a) -> Expr String -> [a]
@@ -54,3 +57,10 @@ exampleContext = do
     w <- newLetBinding "x"
     x1 <- getLetBinding "x"
     return (x1)
+
+simpleRAM :: Word N9
+simpleRAM = ram [] Width9 $ RamInputs {
+    ramData = 1 :: Word N9,
+    ramAddress = delay 1 . delay 1 $ 0 :: Word N11,
+    ramWrite = 1
+  }

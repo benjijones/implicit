@@ -46,6 +46,7 @@ module Lava.Bit
   , simulateN
   , simulateSeq
   , bitToBool
+  , bitToBools
 
     -- * Netlist generation
   , Net(..)
@@ -381,7 +382,12 @@ boolToBit True = high
 -- | Simulate a circuit returning a single bit, and convert result to
 -- a boolean.
 bitToBool :: Bit -> Bool
-bitToBool s = head $ outputSignal s
+bitToBool = head . outputSignal
+
+-- | Simulate a circuit returning a stream of bits, and convert result to
+-- a list of booleans.
+bitToBools :: Bit -> [Bool]
+bitToBools = outputSignal
 
 instance Show Bit where
   show b = if bitToBool b then "high" else "low"

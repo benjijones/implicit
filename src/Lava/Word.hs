@@ -16,6 +16,10 @@ type Word n = Vec n Bit
 -- | Unsigned bit-vectors.
 type Unsigned n = Word n
 
+-- | Convert a bit-vector to a list of its integer outputs
+wordToInts :: Integral a => Word n -> [a]
+wordToInts = map binToNat . map bitToBools . velems
+
 -- | Convert bit-vector to an integer.
 wordToInt :: Integral a => Word n -> a
 wordToInt = binToNat . map bitToBool . velems

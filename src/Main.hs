@@ -29,19 +29,21 @@ main = do
   putStrLn "--------------"
   mapM_ (\(a,b,c) -> putStrLn $ "State: " ++ show (c) ++ " Address: " ++ show a ++ " Memory: " ++ show (A.wordToAtom b)) results
   -}
-  let letMemoryInput = A.atomsToWord
-                  [ A.Let 1 False
-                  , A.Data 1 False
-                  , A.Data 1 False
-                  , A.Data 1 False
-                  , A.In False
-                  , A.Let 2 False
+
+  let atoms = [ A.Let 1 False
+                , A.Data 1 False
+                , A.Data 1 False
+              , A.In False
+                , A.Let 2 False
                   , A.Data 2 False
-                  , A.In False
+                , A.In False
                   , A.LetRef 1 False
                   , A.LetRefPadding False
+                  , A.LetRefPadding False
                   , A.LetRef 2 False
-                  , A.UnLet 2 False
-                  , A.UnLet 1 False]
-  mapM_ print . simulateN 11 . (depth) $ newLetMemory letMemoryInput 1
+                , A.UnLet 2 False
+              , A.UnLet 1 False]
 
+      letMemoryInput = A.atomsToWord atoms
+  mapM_ print . zip [1..] $ atoms
+  mapM_ print . zip [1..] . simulateN 12 . (\a -> (select a, output a)) $ newLetMemory letMemoryInput 1

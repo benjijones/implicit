@@ -22,6 +22,7 @@ data LetMemory m n =
     select :: Word DataN,
     offset :: Word AddressN,
     depth :: Word AddressN,
+    lookupTable :: Word AddressN,
 
     output :: Word WordN
   }
@@ -31,20 +32,17 @@ newLetMemory :: Word WordN -> Bit -> LetMemory AddressN WordN
 newLetMemory input enable =
 
   let -- are we inside a let binding?
-      binding = delay 0  (isLet input) <|> (delay 0 binding <&> (inv (isIn input)))
+      binding = delay 0 (isLet input) <|> (delay 0 binding <&> (inv (isIn input)))
       -- are we unbinding?
       unbinding = isUnLet input
       -- are we inside a let reference?
       letref = isLetRef input <|> isLetRefPadding input
       -- which Let is currently selected in the lookup table
-      select = (isLet input <|> isUnLet input <|> isLetRef input) ? (contentBits input, delay 0 select)
+      select = (isLet input <|> isUnLet input <|> (isLetRef input <&> inv binding)) ? (contentBits input, delay 0 select)
       -- how far into a particular Let or LetRef
-      
-      offset = (binding <&> delay 0 binding) ?
-                 (delay 0 offset + 1,
-                 isLetRefPadding input ? (delay 0 offset + 1, 0))--(delay 0 binding <&> (inv (isIn input))) ? (delay 0 offset + 1, 0)
+      offset = (binding <&> delay 0 binding) ? (delay 0 offset + 1,
+                 isLetRefPadding input ? (delay 0 offset + 1, 0))
       -- pointer to next unused word in memory
-      -- TODO: decrease when unbinding Let (UnLet)
       depth = binding ? (delay 0 depth + 1,
               unbinding ? (lookupTable,
               delay 0 depth))
@@ -70,5 +68,6 @@ newLetMemory input enable =
     select,
     offset,
     depth,
+    lookupTable,
     output
   }
