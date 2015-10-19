@@ -2,6 +2,8 @@
 
 module Lava.Word where
 
+import Prelude hiding (Word)
+
 import Lava.Bit
 import Lava.Binary
 import Lava.Vector

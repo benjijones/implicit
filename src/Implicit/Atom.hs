@@ -1,4 +1,6 @@
 module Implicit.Atom where
+  
+import Prelude hiding (Word)
 
 import Lava.Bit
 import Lava.Vector

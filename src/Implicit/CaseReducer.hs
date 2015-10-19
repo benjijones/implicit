@@ -1,6 +1,8 @@
 {-# LANGUAGE NamedFieldPuns #-}
 module Implicit.CaseReducer where
 
+import Prelude hiding (Word)
+
 import Implicit.Atom
 import qualified Implicit.EvaluationMemory as EM
 

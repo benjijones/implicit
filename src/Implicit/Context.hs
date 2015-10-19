@@ -3,11 +3,17 @@ module Implicit.Context where
 
 import Data.List (find)
 import Control.Applicative
+import Control.Monad
 
 newtype Context b a = Context { runContext :: [Binding b] -> (a, [Binding b]) }
 
 instance (Show a, Show b) => Show (Context b a) where
   show c = show (runContext c [])
+
+instance Functor (Context b) where
+  f `fmap` c = Context (\prev -> 
+        let (x, binds) = runContext c prev in
+            (f x, binds))
 
 instance Monad (Context b) where
   return a = Context (a,)
@@ -15,6 +21,10 @@ instance Monad (Context b) where
       let (x, binds) = runContext oldC prev in
       let (y, newBinds) = runContext (f x) binds in
           (y, newBinds))
+
+instance Applicative (Context b) where
+  pure = return
+  (<*>) = ap
 
 result :: Context b a -> a
 result c = fst (runContext c [])

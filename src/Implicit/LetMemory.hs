@@ -1,6 +1,8 @@
 {-# LANGUAGE NamedFieldPuns #-}
 module Implicit.LetMemory where
 
+import Prelude hiding (Word)
+
 import Implicit.BitWidths
 import Implicit.Atom
 

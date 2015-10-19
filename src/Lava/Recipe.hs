@@ -47,6 +47,8 @@ module Lava.Recipe
   , time
   ) where
 
+import Prelude hiding (Word)
+
 import Lava
 import Data.List
 import Data.Maybe

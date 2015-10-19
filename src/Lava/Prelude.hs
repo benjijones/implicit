@@ -67,6 +67,8 @@ module Lava.Prelude
   , halve
   ) where
 
+import Prelude hiding (Word)
+
 import Lava.Bit
 import Lava.Vector
 import Lava.Word

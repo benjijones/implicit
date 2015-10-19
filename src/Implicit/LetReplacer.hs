@@ -1,6 +1,8 @@
 {-# LANGUAGE NamedFieldPuns #-}
 module Implicit.LetReplacer where
 
+import Prelude hiding (Word)
+
 import Implicit.Atom
 import qualified Implicit.EvaluationMemory as EM
 import Implicit.LetMemory

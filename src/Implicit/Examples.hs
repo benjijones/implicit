@@ -1,5 +1,7 @@
 module Implicit.Examples where
 
+import Prelude hiding (Word)
+
 import qualified Implicit.Atom as A
 import Implicit.ExprToAtom
 import Implicit.Expr
