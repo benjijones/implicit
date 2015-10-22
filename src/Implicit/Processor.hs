@@ -4,7 +4,7 @@ module Implicit.Processor where
 import Implicit.Atom
 import Implicit.EvaluationMemory
 import Implicit.LetReplacer as LR
-import Implicit.CaseReducer as CR
+--import Implicit.CaseReducer as CR
 import Implicit.BitWidths
 
 import Lava.Bit
@@ -21,7 +21,7 @@ data Processor =
     writeEn :: Sig N1,
 
     letReplacer :: LetReplacer AddressN DataN,
-    caseReducer :: CaseReducer AddressN DataN,
+   -- caseReducer :: CaseReducer AddressN DataN,
 
     deleteBit :: Bit,
     cycles :: Reg N4
@@ -43,7 +43,7 @@ newProcessor program = do
       memory = evaluationMemory ramInputs program
 
   letReplacer <- newLetReplacer memory
-  caseReducer <- newCaseReducer memory
+ -- caseReducer <- newCaseReducer memory
   cycles <- newReg
 
   return $ Processor {
@@ -52,7 +52,7 @@ newProcessor program = do
     writeData,
     writeEn,
     letReplacer,
-    caseReducer,
+   -- caseReducer,
     deleteBit = letReplacer!LR.delete!val!vhead
             <|> caseReducer!CR.delete!val!vhead,
     cycles
@@ -66,7 +66,7 @@ processor numCycles finalAddress p =
   , While (p!cycles!val =/= fromInteger numCycles) $
     Seq [
       p!letReplacer!letReplace
-    , p!caseReducer!caseReduce
+   -- , p!caseReducer!caseReduce
     , p!deleteBit |> Seq [
         p!writeData <== p!memory!markDelete
       , p!writeEn <== 1
