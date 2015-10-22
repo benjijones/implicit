@@ -2,6 +2,8 @@ module Lava.Generic where
 
 import Lava.Bit
 
+-- TODO move Generic class definition here
+
 -- | Parallel reduce for a commutative an associative operator.  Input
 -- list must be non-empty.
 tree1 :: (a -> a -> a) -> [a] -> a

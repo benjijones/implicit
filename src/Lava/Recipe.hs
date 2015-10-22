@@ -126,21 +126,21 @@ infix 5 <==
 -- | Mutable variables; named locations that can be read from and assigned to.
 class Var v where
   -- | Return the value of a variable of width /n/.
-  val :: v n -> Word n
+  val :: v n -> Vec n Bit
   -- | Assign a value to a variable of width /n/.
-  (<==) :: v n -> Word n -> Recipe
+  (<==) :: v n -> Vec n Bit -> Recipe
 
 -- | /Signal variables/: assignments to a signal come into effect in the
 -- current clock-cycle, but last only for the duration of that
 -- clock-cycle; if a signal not assigned to in a clock-cycle
 -- then its value will be its /default/ value which is zero unless
 -- otherwise specified.
-data Sig n = Sig { sigId :: VarId, sigVal :: Word n }
+data Sig n = Sig { sigId :: VarId, sigVal :: Vec n Bit }
 
 -- | /Register variables/: assignments to a register come into effect in
 -- the clock-cycle /after/ the assignment is performed; the initial
 -- value of a register is zero unless otherwise specified.
-data Reg n = Reg { regId :: VarId, regVal :: Word n }
+data Reg n = Reg { regId :: VarId, regVal :: Vec n Bit }
 
 instance Generic (Sig n) where
   generic (Sig v x) = cons (Sig v) >< x
@@ -171,7 +171,7 @@ fresh = do { v <- get ; set (v+1) ; return v }
 newSig :: N n => New (Sig n)
 newSig = do { v <- fresh ; s <- ask ; return $ sig v $ assigns v s }
 
-newSigDef :: N n => Word n -> New (Sig n)
+newSigDef :: N n => Vec n Bit -> New (Sig n)
 newSigDef d = do { v <- fresh ; s <- ask ; return $ sigDef d v $ assigns v s }
 
 assigns :: VarId -> Schedule -> [(Bit, [Bit])]
@@ -180,20 +180,20 @@ assigns v s = [(b, e) | (b, w, e) <- s, v == w]
 sig :: N n => VarId -> [(Bit, [Bit])] -> Sig n
 sig v as = Sig v (if null as then 0 else Vec $ pick as)
 
-sigDef :: N n => Word n -> VarId -> [(Bit, [Bit])] -> Sig n
+sigDef :: N n => Vec n Bit -> VarId -> [(Bit, [Bit])] -> Sig n
 sigDef d v as = Sig v (if null as then d else Vec $ pickDef (velems d) as)
 
 pickDef :: [Bit] -> [(Bit,[Bit])] -> [Bit]
 pickDef def ps = pick ((sel, def):ps)
   where sel = inv (orG (map fst ps))
 
-newRegInit :: N n => Word n -> New (Reg n)
+newRegInit :: N n => Vec n Bit -> New (Reg n)
 newRegInit i = do { v <- fresh ; s <- ask ; return $ reg v i $ assigns v s }
 
 newReg :: N n => New (Reg n)
 newReg = newRegInit 0
 
-reg :: N n => VarId -> Word n -> [(Bit, [Bit])] -> Reg n
+reg :: N n => VarId -> Vec n Bit -> [(Bit, [Bit])] -> Reg n
 reg v i as = Reg v (if null as then i else Vec out)
   where out = delayEn (velems i) (orG $ map fst as) (pick as)
 

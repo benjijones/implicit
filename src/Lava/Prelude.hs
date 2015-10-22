@@ -47,7 +47,6 @@ module Lava.Prelude
   , dualRam
 
     -- * Arithmetic
-  , Unsigned
   , Signed(..)
   , natSub
   , complement
@@ -169,7 +168,7 @@ intToOneHot i w
   where bits = [if abs i == j then high else low | j <- [0..w-1]]
 
 -- | Convert a Haskell @Int@ to a one-hot bit-vector.
-oneHot :: N n => Int -> Word n
+oneHot :: N n => Int -> Vec n Bit
 oneHot i = sized (Vec . intToOneHot i)
 
 ---------------------------------- Bit Vectors --------------------------------
@@ -192,9 +191,20 @@ instance Ordered (Vec n Bit) where
   a |>=| b = velems a `uge` velems b
   a |>| b  = velems a `ugt` velems b
 
+instance N n => Num (Vec n Bit) where
+  a + b = vec (velems a /+/ velems b)
+  a - b = vec (velems a /-/ velems b)
+  a * b = error "Multiplication of bit-vectors is not yet supported"
+  abs a = a
+  -- just 0 or 1 as vectors are interpreted as unsigned
+  signum a = vec (orG xs : repeat 0)
+    where xs = velems a
+  fromInteger i = sized (\n -> Vec (i `ofWidth` n))
+
+
 -- | Subtracts @b@ from @a@, but if @b@ is larger than @a@ then
 -- result is @0@.
-natSub :: N n => Word n -> Word n -> Word n
+natSub :: N n => Vec n Bit -> Vec n Bit -> Vec n Bit
 natSub a b = Vec $ mapG (last r <&>) (init r)
   where (x, y) = (velems a, velems b)
         r = binAdd high x (map inv y)
@@ -235,7 +245,7 @@ nameList :: Int -> String -> [Bit]
 nameList n s = map (name . (s ++) . show) [1..n]
 
 -- | Returns a vector of N named bits with a given prefix.
-nameWord :: N n => String -> Word n
+nameWord :: N n => String -> Vec n Bit
 nameWord s = sized (\n -> Vec $ nameList n s)
 
 instance Eq Bit where

@@ -14,23 +14,23 @@ import Lava.Ram
 import Lava.Generic
 
 
-data LetMemory m n =
+data LetMemory d =
   LetMemory {
-    input :: Word WordN,
+    input :: Word d WordN,
     enable :: Bit,
 
     binding :: Bit,
     unbinding :: Bit,
-    select :: Word DataN,
-    offset :: Word AddressN,
-    depth :: Word AddressN,
-    lookupTable :: Word AddressN,
+    select :: Word d DataN,
+    offset :: Word d AddressN,
+    depth :: Word d AddressN,
+    lookupTable :: Word d AddressN,
 
-    output :: Word WordN
+    output :: Word d WordN
   }
 
 
-newLetMemory :: Word WordN -> Bit -> LetMemory AddressN WordN
+newLetMemory :: Word d WordN -> Bit -> LetMemory d
 newLetMemory input enable =
 
   let -- are we inside a let binding?

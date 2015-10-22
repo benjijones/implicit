@@ -6,8 +6,8 @@ import Lava.Word
 import Lava.Vector
 import Lava.Ram
 
-type EvaluationMemory m n = Word n
+type EvaluationMemory d addrW dataW = Word d dataW
 
 
-evaluationMemory :: (N m, N n) => RamInputs n m -> [Integer] -> EvaluationMemory m n
-evaluationMemory ramInputs contents = ram contents Width9 ramInputs
+evaluationMemory :: (N dataW, N addrW) => RamInputs dataW addrW -> [Integer] -> EvaluationMemory d addrW dataW
+evaluationMemory ramInputs contents = Word $ ram contents Width9 ramInputs

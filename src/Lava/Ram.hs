@@ -12,15 +12,15 @@ import qualified Data.IntMap as IM
 
 import Data.List (unfoldr)
 
-data RamInputs n m =
+data RamInputs dataW addrW =
   RamInputs {
-    ramData    :: Word n
-  , ramAddress :: Word m
+    ramData    :: Vec dataW Bit
+  , ramAddress :: Vec addrW Bit
   , ramWrite   :: Bit
   }
 
 -- | RAM of any width and size, with intialiser.
-ram :: (N n, N m) => [Integer] -> RamAlgorithm -> RamInputs n m -> Word n
+ram :: (N dataW, N addrW) => [Integer] -> RamAlgorithm -> RamInputs dataW addrW -> Vec dataW Bit
 ram init pt inps = Vec $ primRam init pt $
   RamInps {
       dataBus     = velems (vrigid $ ramData inps)
@@ -29,8 +29,8 @@ ram init pt inps = Vec $ primRam init pt $
   }
 
 -- | Dual-port RAM of any width and size, with intialiser.
-dualRam :: (N n, N m) => [Integer] -> RamAlgorithm
-        -> (RamInputs n m, RamInputs n m) -> (Word n, Word n)
+dualRam :: (N dataW, N addrW) => [Integer] -> RamAlgorithm
+        -> (RamInputs dataW addrW, RamInputs dataW addrW) -> (Vec dataW Bit, Vec dataW Bit)
 dualRam init pt (inps0, inps1) = (Vec out0, Vec out1)
   where
     (out0, out1) =

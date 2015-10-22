@@ -3,6 +3,7 @@ module Implicit.Atom where
 import Prelude hiding (Word)
 
 import Lava.Bit
+import Lava.Word
 import Lava.Vector
 import Lava.Prelude
 
@@ -28,8 +29,8 @@ data Atom a =
 
 type Deleted = Bool
 
-atomsToWord :: (N n) => [Atom n] -> Word n
-atomsToWord = foldr (\atm rest -> delay (fromInteger . atomToInteger $ atm) rest) 0
+atomsToWord :: (N n) => [Atom n] -> Word d n
+atomsToWord = Word . foldr (\atm rest -> delay (fromInteger . atomToInteger $ atm) rest) 0
 
 atomToInteger :: Atom a -> Integer
 atomToInteger atom = 0 .|. (typeEncoding atom `shiftL` 1) .|. (atomContents atom `shiftL` 5)
@@ -58,13 +59,13 @@ typeEncoding (LetRef _ _) = 7
 typeEncoding (LetRefPadding _) = 8
 typeEncoding (UnLet _ _)  = 9
 
-typeBits :: (N n) => Word (S (S (S (S (S n))))) -> Word N4
-typeBits = vtake n4 . vdrop n1
+typeBits :: (N n) => Word d (S (S (S (S (S n))))) -> Word d N4
+typeBits = Word . vtake n4 . vdrop n1 . unWord
 
-contentBits :: (N n) => Word (S (S (S (S (S n))))) -> Word n
-contentBits = vdrop n5
+contentBits :: (N n) => Word d (S (S (S (S (S n))))) -> Word d n
+contentBits = Word . vdrop n5 . unWord
 
-wordToAtom :: (N n) => Word (S (S (S (S (S n))))) -> Atom n
+wordToAtom :: (N n) => Word d (S (S (S (S (S n))))) -> Atom n
 wordToAtom w
   | bitToBool (isData w) = Data (wordToInt . contentBits $ w) (isDeleted w)
   | bitToBool (isCase w) = Case (wordToInt . contentBits $ w) (isDeleted w)
@@ -77,38 +78,38 @@ wordToAtom w
   | bitToBool (isLetRefPadding w) = LetRefPadding (isDeleted w)
   | bitToBool (isUnLet w) = UnLet (wordToInt . contentBits $ w) (isDeleted w)
 
-isData :: (N n) => Word (S (S (S (S (S n))))) -> Bit
-isData = (=== 0) . typeBits
+isData :: (N n) => Word d (S (S (S (S (S n))))) -> Bit
+isData = (=== 0) . unWord . typeBits
 
-isCase :: (N n) => Word (S (S (S (S (S n))))) -> Bit
-isCase = (=== 1) . typeBits
+isCase :: (N n) => Word d (S (S (S (S (S n))))) -> Bit
+isCase = (=== 1) . unWord . typeBits
 
-isArm :: (N n) => Word (S (S (S (S (S n))))) -> Bit
-isArm = (=== 2) . typeBits
+isArm :: (N n) => Word d (S (S (S (S (S n))))) -> Bit
+isArm = (=== 2) . unWord . typeBits
 
-isArrow :: (N n) => Word (S (S (S (S (S n))))) -> Bit
-isArrow = (=== 3) . typeBits
+isArrow :: (N n) => Word d (S (S (S (S (S n))))) -> Bit
+isArrow = (=== 3) . unWord . typeBits
 
-isUnCase :: (N n) => Word (S (S (S (S (S n))))) -> Bit
-isUnCase = (=== 4) . typeBits
+isUnCase :: (N n) => Word d (S (S (S (S (S n))))) -> Bit
+isUnCase = (=== 4) . unWord . typeBits
 
-isLet :: (N n) => Word (S (S (S (S (S n))))) -> Bit
-isLet = (=== 5) . typeBits
+isLet :: (N n) => Word d (S (S (S (S (S n))))) -> Bit
+isLet = (=== 5) . unWord . typeBits
 
-isIn :: (N n) => Word (S (S (S (S (S n))))) -> Bit
-isIn = (=== 6) . typeBits
+isIn :: (N n) => Word d (S (S (S (S (S n))))) -> Bit
+isIn = (=== 6) . unWord . typeBits
 
-isLetRef :: (N n) => Word (S (S (S (S (S n))))) -> Bit
-isLetRef = (=== 7) . typeBits
+isLetRef :: (N n) => Word d (S (S (S (S (S n))))) -> Bit
+isLetRef = (=== 7) . unWord . typeBits
 
-isLetRefPadding :: (N n) => Word (S (S (S (S (S n))))) -> Bit
-isLetRefPadding = (=== 8) . typeBits
+isLetRefPadding :: (N n) => Word d (S (S (S (S (S n))))) -> Bit
+isLetRefPadding = (=== 8) . unWord . typeBits
 
-isUnLet :: (N n) => Word (S (S (S (S (S n))))) -> Bit
-isUnLet = (=== 9) . typeBits
+isUnLet :: (N n) => Word d (S (S (S (S (S n))))) -> Bit
+isUnLet = (=== 9) . unWord . typeBits
 
-isDeleted :: Word (S n) -> Bool
-isDeleted = bitToBool . vhead
+isDeleted :: Word d (S n) -> Bool
+isDeleted = bitToBool . vhead . unWord
 
-markDelete :: (N n) => Word (S n) -> Word (S n)
-markDelete w = high +> vtail w
+markDelete :: (N n) => Word d (S n) -> Word d (S n)
+markDelete (Word w) = Word $ high +> vtail w
