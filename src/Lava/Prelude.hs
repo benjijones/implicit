@@ -171,11 +171,6 @@ intToOneHot i w
 oneHot :: N n => Int -> Vec n Bit
 oneHot i = sized (Vec . intToOneHot i)
 
----------------------------------- Bit Vectors --------------------------------
-
-instance Generic a => Generic (Vec n a) where
-  generic (Vec []) = cons (Vec [])
-  generic (Vec (x:xs)) = cons (\x xs -> Vec (x:xs)) >< x >< xs
 
 infix 4 |<=|, |<|, |>|, |>=|
 

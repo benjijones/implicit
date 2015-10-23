@@ -1,6 +1,7 @@
 module Lava.Generic where
 
 import Lava.Bit
+import Lava.Vector
 
 -- | Parallel reduce for a commutative an associative operator.  Input
 -- list must be non-empty.
@@ -13,6 +14,10 @@ tree1 f (x:y:ys) = tree1 f (ys ++ [f x y])
 tree :: (a -> a -> a) -> a -> [a] -> a
 tree f z xs = if null xs then z else tree1 f xs
 
+
+instance Generic a => Generic (Vec n a) where
+  generic (Vec []) = cons (Vec [])
+  generic (Vec (x:xs)) = cons (\x xs -> Vec (x:xs)) >< x >< xs
 
 -- | Logical AND of all bits in a structure.
 andG :: Generic a => a -> Bit
