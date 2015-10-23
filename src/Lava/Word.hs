@@ -48,5 +48,8 @@ instance N n => Num (Word d n) where
     where xs = velems a
   fromInteger i = Word $ sized (\n -> Vec (i `ofWidth` n))
 
+instance Generic (Word d n) where
+  generic (Word vec) = cons Word >< vec
+
 ofWidth :: Integral a => a -> Int -> [Bit]
 n `ofWidth` s = map boolToBit (intToSizedBin n s)
