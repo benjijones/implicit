@@ -3,12 +3,11 @@ module Main where
 import qualified Implicit.Expr as E
 import Implicit.ExprToAtom
 import qualified Implicit.Atom as A
-import Implicit.LetReplacer as LR
-import Implicit.CaseReducer as CR
+--import Implicit.LetReplacer as LR
+--import Implicit.CaseReducer as CR
 import Implicit.EvaluationMemory
-import Implicit.Examples
-import Implicit.Processor
-import Implicit.LetMemory
+--import Implicit.Examples
+--import Implicit.LetMemory
 
 import Lava.Vector
 import Lava.Binary
@@ -30,7 +29,8 @@ main = do
   mapM_ (\(a,b,c) -> putStrLn $ "State: " ++ show (c) ++ " Address: " ++ show a ++ " Memory: " ++ show (A.wordToAtom b)) results
   -}
 
-  let atoms = [ A.Let 1 False
+  let atoms :: [A.Atom N4]
+      atoms = [ A.Let 1 False
                 , A.Data 1 False
                 , A.Data 1 False
               , A.In False
@@ -46,4 +46,4 @@ main = do
 
       letMemoryInput = A.atomsToWord atoms
   mapM_ print . zip [1..] $ atoms
-  mapM_ print . zip [1..] . simulateN 12 . (\a -> (select a, output a)) $ newLetMemory letMemoryInput 1
+--  mapM_ print . zip [1..] . simulateN 12 . (\a -> (select a, output a)) $ newLetMemory letMemoryInput 1

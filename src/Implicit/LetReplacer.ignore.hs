@@ -5,7 +5,7 @@ import Prelude hiding (Word)
 
 import Implicit.Atom
 import qualified Implicit.EvaluationMemory as EM
-import Implicit.LetMemory
+--import Implicit.LetMemory
 
 import Lava.Word
 import Lava.Vector

@@ -34,7 +34,7 @@ newLetMemory :: Word d WordN -> Bit -> LetMemory d
 newLetMemory input enable =
 
   let -- are we inside a let binding?
-      binding = delay 0 (isLet input) <|> (delay 0 binding <&> (inv (isIn input)))
+      binding = undefined --delay 0  (isLet input) <|> (delay 0 binding <&> (inv (isIn input)))
       -- are we unbinding?
       unbinding = isUnLet input
       -- are we inside a let reference?
@@ -45,13 +45,13 @@ newLetMemory input enable =
       offset = (binding <&> delay 0 binding) ? (delay 0 offset + 1,
                  isLetRefPadding input ? (delay 0 offset + 1, 0))
       -- pointer to next unused word in memory
-      depth = binding ? (delay 0 depth + 1,
+      depth = {-binding ? (delay 0 depth + 1,
               unbinding ? (lookupTable,
-              delay 0 depth))
+              delay 0 depth))-}undefined
 
       lookupTableInputs = RamInputs {
         ramData = depth,
-        ramAddress = select,
+        ramAddress = unWord select,
         ramWrite = enable <&> isLet input
       }
       lookupTable = ram [] Width9 lookupTableInputs

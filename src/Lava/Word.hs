@@ -15,7 +15,6 @@ import Data.List(find)
 
 -- Contains a Bit signal with
 -- type-level encodings of:
---  the # of cycle delays in the signal
 --  the width of the signal
 newtype Word delay width = Word { unWord :: Vec width Bit }
 
@@ -26,17 +25,8 @@ getBits (Word vec) = velems vec
 wordToInts :: Integral a => Word d w -> [a]
 wordToInts = map binToNat . map bitToBools . getBits
 
--- | Convert bit-vector to an integer.
--- uses 'head' but should be safe unless a 
-wordToInt :: Integral a => Word d w -> a
-wordToInt = head . wordToInts
-
 instance Show (Word d n) where
   show = show . unWord
-
-instance Eq (Vec n Bit) where
-  a == b = error msg
-    where msg = "== and /= on bit-vectors is not supported: try === and =/="
 
 instance N n => Num (Word d n) where
   (Word a) + (Word b) = Word $ vec (velems a /+/ velems b)
@@ -53,3 +43,6 @@ instance Generic (Word d n) where
 
 ofWidth :: Integral a => a -> Int -> [Bit]
 n `ofWidth` s = map boolToBit (intToSizedBin n s)
+
+delayW :: Word d n -> Word (S d) n
+delayW = Word . delay (Vec (repeat low)) . unWord

@@ -51,7 +51,6 @@ module Lava.Prelude
   , natSub
   , complement
   , bitPlus
-  , wordToInt
   , extend
 
     -- * Comparators

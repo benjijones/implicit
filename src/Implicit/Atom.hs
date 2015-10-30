@@ -67,16 +67,16 @@ contentBits = Word . vdrop n5 . unWord
 
 wordToAtom :: (N n) => Word d (S (S (S (S (S n))))) -> Atom n
 wordToAtom w
-  | bitToBool (isData w) = Data (wordToInt . contentBits $ w) (isDeleted w)
-  | bitToBool (isCase w) = Case (wordToInt . contentBits $ w) (isDeleted w)
-  | bitToBool (isArm w) = Arm (wordToInt . contentBits $ w) (isDeleted w)
-  | bitToBool (isArrow w) = Arrow (wordToInt . contentBits $ w) (isDeleted w)
-  | bitToBool (isUnCase w) = UnCase (wordToInt . contentBits $ w) (isDeleted w)
-  | bitToBool (isLet w) = Let (wordToInt . contentBits $ w) (isDeleted w)
+  | bitToBool (isData w) = Data (head . wordToInts . contentBits $ w) (isDeleted w)
+  | bitToBool (isCase w) = Case (head . wordToInts . contentBits $ w) (isDeleted w)
+  | bitToBool (isArm w) = Arm (head . wordToInts . contentBits $ w) (isDeleted w)
+  | bitToBool (isArrow w) = Arrow (head . wordToInts . contentBits $ w) (isDeleted w)
+  | bitToBool (isUnCase w) = UnCase (head . wordToInts . contentBits $ w) (isDeleted w)
+  | bitToBool (isLet w) = Let (head . wordToInts . contentBits $ w) (isDeleted w)
   | bitToBool (isIn w) = In (isDeleted w)
-  | bitToBool (isLetRef w) = LetRef (wordToInt . contentBits $ w) (isDeleted w)
+  | bitToBool (isLetRef w) = LetRef (head . wordToInts . contentBits $ w) (isDeleted w)
   | bitToBool (isLetRefPadding w) = LetRefPadding (isDeleted w)
-  | bitToBool (isUnLet w) = UnLet (wordToInt . contentBits $ w) (isDeleted w)
+  | bitToBool (isUnLet w) = UnLet (head . wordToInts . contentBits $ w) (isDeleted w)
 
 isData :: (N n) => Word d (S (S (S (S (S n))))) -> Bit
 isData = (=== 0) . unWord . typeBits
