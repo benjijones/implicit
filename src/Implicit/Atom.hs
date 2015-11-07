@@ -1,33 +1,18 @@
 module Implicit.Atom where
   
 import Prelude hiding (Word)
+import Data.Bits
 
 import Lava.Bit
 import Lava.Word
 import Lava.Vector
 import Lava.Prelude
 
-import Data.Bits
+import Implicit.AtomType
 
-data Atom a =
-    Data Integer Deleted
-
-  -- branching
-  | Case Integer Deleted
-  | Arm Integer Deleted
-  | Arrow Integer Deleted
-  | UnCase Integer Deleted
-
-  -- let expressions
-  | Let Integer Deleted
-  | In Deleted
-  | LetRef Integer Deleted
-  | LetRefPadding Deleted
-  | UnLet Integer Deleted
-
-  -- arithmetic
-  | Add Deleted
-
+data Atom a = Atom { atomType :: AtomType
+                   , atomDeleted :: Deleted
+                   , atomContents :: Integer }
   deriving Show
 
 type Deleted = Bool
@@ -38,18 +23,6 @@ atomsToWord = Word . vmap (fromInteger . atomToInteger)
 atomToInteger :: Atom a -> Integer
 atomToInteger atom = 0 .|. (typeEncoding atom `shiftL` 1) .|. (atomContents atom `shiftL` 5)
 
-atomContents :: Atom a -> Integer
-atomContents (Data val _)   = val
-atomContents (Case ref _)   = ref
-atomContents (Arm arm _)    = arm
-atomContents (Arrow ref _)  = ref
-atomContents (UnCase ref _) = ref
-atomContents (Let ref _)    = ref
-atomContents (In _)         = 0
-atomContents (LetRef ref _) = ref
-atomContents (LetRefPadding _) = 0
-atomContents (UnLet ref _)  = ref
-
 typeBits :: (N n) => Word d (S (S (S (S (S n))))) -> Word d N4
 typeBits = Word . vmap (vtake n4 . vdrop n1) . unWord
 
@@ -59,17 +32,7 @@ contentBits = Word . vmap (vdrop n5) . unWord
 wordToAtoms :: (N w) => Word l (S (S (S (S (S w))))) -> Vec l (Atom (S (S (S (S (S w))))))
 wordToAtoms = wordMap wordToAtom
   where
-    wordToAtom w
-      | bitToBool (isData w) = Data (head . wordToInts . contentBits $ w) (isDeleted w)
-      | bitToBool (isCase w) = Case (head . wordToInts . contentBits $ w) (isDeleted w)
-      | bitToBool (isArm w) = Arm (head . wordToInts . contentBits $ w) (isDeleted w)
-      | bitToBool (isArrow w) = Arrow (head . wordToInts . contentBits $ w) (isDeleted w)
-      | bitToBool (isUnCase w) = UnCase (head . wordToInts . contentBits $ w) (isDeleted w)
-      | bitToBool (isLet w) = Let (head . wordToInts . contentBits $ w) (isDeleted w)
-      | bitToBool (isIn w) = In (isDeleted w)
-      | bitToBool (isLetRef w) = LetRef (head . wordToInts . contentBits $ w) (isDeleted w)
-      | bitToBool (isLetRefPadding w) = LetRefPadding (isDeleted w)
-      | bitToBool (isUnLet w) = UnLet (head . wordToInts . contentBits $ w) (isDeleted w)
+    wordToAtom w = Atom (decode w) (isDeleted) contentBits
 
 typeEncoding :: Atom a -> Integer
 typeEncoding (Data _ _)   = 0

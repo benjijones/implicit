@@ -34,19 +34,28 @@ wordToInts = map binToNat . map bitToBools . getBits
 instance Show (Word d n) where
   show = show . unWord
 
-{-}
-instance N n => Num (Word d n) where
-  (Word a) + (Word b) = Word $ vec (velems a /+/ velems b)
-  (Word a) - (Word b) = Word $ vec (velems a /-/ velems b)
-  (Word a) * (Word b) = error "Multiplication of Words is not yet supported"
-  abs (Word a) = Word $ a
-  -- just 0 or 1 as vectors are interpreted as unsigned
-  signum (Word a) = Word $ vec (orG xs : repeat 0)
-    where xs = velems a
-  fromInteger i = Word $ sized (\n -> Vec (i `ofWidth` n))
--}
+-- this num instance only compiles when
+-- the length of the word equals 1
+-- and it just delegates to the underlying
+-- Vec n Bit instance 
+instance N n => Num (Word N1 n) where
+  (Word a) + (Word b) = undefined
+  (Word a) - (Word b) = undefined
+  (Word a) * (Word b) = undefined
+  abs = error "Words do not have a signed interpretation"
+  -- just 0 or 1
+  signum (Word a) = undefined
+  fromInteger = Word . vsingle . fromInteger
+
 instance Generic (Word d n) where
   generic (Word vec) = cons Word >< vec
+
+instance Eq (Word N1 n) where
+  a == b = bitToBool (a =/= b)
+
+class Encode a where
+  encode :: a -> Word l w
+  decode :: Word l w -> a
 
 delayW :: Word (S l) w -> Word (S (S l)) w
 delayW (Word word) = Word (word <+ vmap (delay 0) (vlast word))
