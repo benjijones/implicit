@@ -8,6 +8,7 @@ import Prelude hiding (Word)
 import Lava.Bit
 import Lava.Binary
 import Lava.Vector
+import Lava.Prelude
 import Lava.Arithmetic
 import Lava.Generic
 
@@ -16,18 +17,24 @@ import Data.List(find)
 -- Contains a Bit signal with
 -- type-level encodings of:
 --  the width of the signal
-newtype Word delay width = Word { unWord :: Vec width Bit }
+-- the length of the signal
+newtype Word length width = Word { unWord :: Vec length (Vec width Bit) }
 
-getBits :: Word d w -> [Bit]
-getBits (Word vec) = velems vec
+wordMap :: (Word (S Z) w -> a) -> Word l w -> Vec l a
+wordMap f = vmap (f . Word . vsingle) . unWord
+
+
+getBits :: Word (S l) w -> [Bit]
+getBits = velems . vhead . unWord
 
 -- | Convert a Word to a list of its integer outputs
-wordToInts :: Integral a => Word d w -> [a]
+wordToInts :: Integral a => Word (S l) w -> [a]
 wordToInts = map binToNat . map bitToBools . getBits
 
 instance Show (Word d n) where
   show = show . unWord
 
+{-}
 instance N n => Num (Word d n) where
   (Word a) + (Word b) = Word $ vec (velems a /+/ velems b)
   (Word a) - (Word b) = Word $ vec (velems a /-/ velems b)
@@ -37,12 +44,10 @@ instance N n => Num (Word d n) where
   signum (Word a) = Word $ vec (orG xs : repeat 0)
     where xs = velems a
   fromInteger i = Word $ sized (\n -> Vec (i `ofWidth` n))
-
+-}
 instance Generic (Word d n) where
   generic (Word vec) = cons Word >< vec
 
-ofWidth :: Integral a => a -> Int -> [Bit]
-n `ofWidth` s = map boolToBit (intToSizedBin n s)
+delayW :: Word (S l) w -> Word (S (S l)) w
+delayW (Word word) = Word (word <+ vmap (delay 0) (vlast word))
 
-delayW :: Word d n -> Word (S d) n
-delayW = Word . delay (Vec (repeat low)) . unWord

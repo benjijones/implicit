@@ -15,7 +15,7 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src, src/Implicit
-  exposed-modules:     Lava, Implicit.Atom, Implicit.BitWidths, Implicit.Context, Implicit.EvaluationMemory Implicit.Expr, Implicit.ExprToAtom, Implicit.LookupTable, Implicit.Sentence
+  exposed-modules:     Lava, Implicit.Atom, Implicit.BitWidths, Implicit.Context, Implicit.EvaluationMemory Implicit.Expr, Implicit.ExprToAtom, Implicit.LookupTable, Implicit.Sentence, Implicit.Adder
 
   build-depends:       base, process, containers, singletons
   default-language:    Haskell2010

@@ -8,10 +8,8 @@ exhaustive, but a useful start.
 -}
 
 module Lava.Prelude
-  ( -- * Bit-vectors
-    Word
-    -- * Generalised primitives
-  , andG
+  (-- * Generalised primitives
+    andG
   , orG
   , delay
   , delayEn
@@ -41,11 +39,6 @@ module Lava.Prelude
   , rotateLeft
   , dot
 
-    -- * RAMs
-  , RamInputs(..)
-  , ram
-  , dualRam
-
     -- * Arithmetic
   , Signed(..)
   , natSub
@@ -69,11 +62,9 @@ import Prelude hiding (Word)
 
 import Lava.Bit
 import Lava.Vector
-import Lava.Word
 import Lava.Binary
 import Lava.Generic
 import Lava.Arithmetic
-import Lava.Ram
 import Data.List(transpose, inits, tails)
 
 -- | Split a list into sub-lists of maximum length N.
@@ -202,6 +193,9 @@ natSub :: N n => Vec n Bit -> Vec n Bit -> Vec n Bit
 natSub a b = Vec $ mapG (last r <&>) (init r)
   where (x, y) = (velems a, velems b)
         r = binAdd high x (map inv y)
+
+ofWidth :: Integral a => a -> Int -> [Bit]
+n `ofWidth` s = map boolToBit (intToSizedBin n s)
 
 ------------------------------ Signed Bit Vectors -----------------------------
 
