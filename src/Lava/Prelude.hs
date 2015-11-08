@@ -24,9 +24,9 @@ module Lava.Prelude
   , pickG
 
     -- * Encoding and decoding
-  , decode
+  , binaryToOneHot
   , decodeTwos
-  , encode
+  , oneHotToBinary
   , tally
   , oneHot
   , tal
@@ -87,30 +87,30 @@ pick choices = select sels inps
 
 
 -- | Binary to one-hot decoder.
-decode :: [Bit] -> [Bit]
-decode [] = [high]
-decode [x] = [inv x, x]
-decode (x:xs) = concatMap (\y -> [inv x <&> y, x <&> y]) rest
-  where rest = decode xs
+binaryToOneHot :: [Bit] -> [Bit]
+binaryToOneHot [] = [high]
+binaryToOneHot [x] = [inv x, x]
+binaryToOneHot (x:xs) = concatMap (\y -> [inv x <&> y, x <&> y]) rest
+  where rest = binaryToOneHot xs
 
--- | Two's complement version of 'decode'.
+-- | Two's complement version of 'binaryToOneHot'.
 decodeTwos :: [Bit] -> [Bit]
 decodeTwos xs = zipWith (<|>) ys zs
-  where (ys, zs) = halve (decode xs)
+  where (ys, zs) = halve (binaryToOneHot xs)
 
 -- | Split a list in two.
 halve :: [a] -> ([a], [a])
 halve xs = splitAt (length xs `div` 2) xs
 
 -- | One-hot to binary encoder.
-encode :: [Bit] -> [Bit]
-encode [_] = []
-encode as  = zipWith (<|>) (encode ls) (encode rs) ++ [orG rs]
+oneHotToBinary :: [Bit] -> [Bit]
+oneHotToBinary [_] = []
+oneHotToBinary as  = zipWith (<|>) (oneHotToBinary ls) (oneHotToBinary rs) ++ [orG rs]
   where (ls,rs) = splitAt (length as `div` 2) as
 
 -- | Binary to tally converter.
 tally :: [Bit] -> [Bit]
-tally = tal . decode
+tally = tal . binaryToOneHot
 
 -- | One-hot to tally converter.
 tal :: [Bit] -> [Bit]

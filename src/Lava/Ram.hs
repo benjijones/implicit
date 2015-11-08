@@ -1,10 +1,7 @@
 module Lava.Ram where
 
-import Prelude hiding (Word)
-
 import Lava.Bit
 import Lava.Binary
-import Lava.Word
 import Lava.Vector
 
 import qualified Lava.JList as JL
