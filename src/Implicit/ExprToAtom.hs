@@ -1,45 +1,46 @@
 module Implicit.ExprToAtom where
 
 import Implicit.Expr as E
-import Implicit.Atom as A
+import Implicit.Atom
+import Implicit.AtomType as A
 import Implicit.Context
 
 import Lava.Vector
 
-exprToAtoms :: (N n, Eq b) => Expr b -> [Atom n]
+exprToAtoms :: Eq b => Expr b -> [Atom]
 exprToAtoms = result . exprToAtomsC
 
-exprToAtomsC :: (N n, Eq b) => Expr b -> Context b [Atom n]
-exprToAtomsC (E.Data val) = return [A.Data val False]
+exprToAtomsC :: Eq b => Expr b -> Context b [Atom]
+exprToAtomsC (E.Data val) = return [Atom False A.Data val]
 
 exprToAtomsC (E.Case scrut cases) = do
   scrutAtoms <- exprToAtomsC scrut
   caseId <- newCaseBinding
   arms <- sequence . map (caseToArm caseId) $ cases
   return $
-    A.Case caseId False :
+    Atom False A.Case caseId :
     scrutAtoms ++
     concat arms ++
-    [A.UnCase caseId False]
+    [Atom False A.UnCase caseId]
   where caseToArm caseId (pattern, expr) = do
           expr'  <- exprToAtomsC expr
           pattern' <- exprToAtomsC pattern
-          return $ Arm caseId False :
+          return $ Atom False A.Arm caseId :
                    pattern' ++
-                   Arrow caseId False :
+                   Atom False A.Arrow caseId :
                    expr'
 
 exprToAtomsC (E.Let bind bound expr) = do
   letBind <- newLetBinding bind
   boundAtoms <- exprToAtomsC bound
   exprAtoms <- exprToAtomsC expr
-  return $ A.Let letBind False :
+  return $ Atom False A.Let letBind :
            boundAtoms ++
-           A.In False :
+           Atom False A.In 0 :
            exprAtoms ++
-           [A.UnLet letBind False]
+           [Atom False A.UnLet letBind]
 
 exprToAtomsC (E.LetRef bind) = do
     bind' <- getLetBinding bind
-    return [A.LetRef bind' False]
+    return [Atom False A.LetRef bind']
 --exprToAtomsWithContext a b = undefined

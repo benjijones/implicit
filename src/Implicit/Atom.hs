@@ -16,31 +16,36 @@ import Lava.Prelude
 
 import Implicit.AtomType
 
-data Atom a = Atom { atomDeleted :: Deleted
+data Atom = Atom { atomDeleted :: Deleted
                    , atomType :: AtomType
                    , atomContents :: Integer }
   deriving Show
 
 type Deleted = Bool
 
-instance Encode N1 N1 Deleted where
-  encode = Word . vsingle . vsingle . boolToBit
-  decode = bitToBool . vhead . vhead . unWord
+type AtomN = N10
+type DataN = N5
+type TypeN = N4
 
-instance Encode N1 N11 (Atom N11) where
-  encode atom = (encode (atomDeleted atom) :: Word N1 N1) `combine`
-                (encode (atomType atom) :: Word N1 N4) `combine`
-                (encode (atomContents atom) :: Word N1 N6)
-  decode word = Atom (decode deleted :: Deleted)
-                     (decode ty :: AtomType)
-                     (decode contents :: Integer)
+encodeDeleted :: Deleted -> Word N1 N1
+encodeDeleted = Word . vsingle . vsingle . boolToBit
+
+decodeDeleted :: Word N1 N1 -> Deleted
+decodeDeleted = bitToBool . vhead . vhead . unWord
+
+encodeAtom :: Atom -> Word N1 AtomN
+encodeAtom (Atom deleted ty contents) =
+             (encodeDeleted deleted) `combine`
+             (encodeAtomType ty :: Word N1 TypeN) `combine`
+             (encodeInteger contents :: Word N1 DataN)
+
+decodeAtom :: Word N1 AtomN -> Atom
+decodeAtom atom = Atom (decodeDeleted deleted)
+                       (decodeAtomType ty)
+                       (decodeInteger contents)
     where
-      (deleted, rest) = splitAt n1 word
+      (deleted, rest) = splitAt n1 atom
       (ty, contents) = splitAt n4 rest
-
-instance Encode l N11 (Vec l (Atom N11)) where
-  encode = flatMap (encode :: Atom N11 -> Word N1 N11)
-  decode = wordMap (decode :: Word N1 N11 -> Atom N11)
 
 typeBits :: (N n) => Word d (S (S (S (S (S n))))) -> Word d N4
 typeBits = Word . vmap (vtake n4 . vdrop n1) . unWord

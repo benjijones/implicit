@@ -52,25 +52,15 @@ instance Generic (Word d n) where
 instance Eq (Word l n) where
   a == b = bitToBool (a === b)
 
-class Encode l w a where
-  encode :: a -> Word l w
+encodeInteger :: (N w) => Integer -> Word N1 w
+encodeInteger = fromInteger
 
-class Decode l w a where
-  decode :: Word l w -> a
+decodeInteger :: (N w) => Word N1 w -> Integer
+decodeInteger = binToInt . map bitToBool . velems . vhead . unWord
 
-instance Encode l w (Word l w) where
-  encode = id
-instance Decode l w (Word l w) where
-  decode = id
+encodeVector :: (Mul l1 l2 l3) => (a -> Word l2 w) -> Vec l1 a -> Word l3 w
+encodeVector f = Word . vconcat . vmap (unWord . f)
 
-instance (N w) => Encode N1 w Integer where
-  encode = fromInteger
-instance (N w) => Decode N1 w Integer where
-  decode = binToInt . map bitToBool . velems . vhead . unWord
-
-{-instance (Mul l3 l1 l2) => Encode l2 w (Vec l3 (Word l1 w)) where
-  encode = Word . vconcat . vmap unWord
--}
 delayW :: Word (S l) w -> Word (S (S l)) w
 delayW (Word word) = Word (word <+ vmap (delay 0) (vlast word))
 

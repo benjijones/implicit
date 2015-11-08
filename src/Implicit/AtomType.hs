@@ -26,31 +26,28 @@ data AtomType =
   | Add
   deriving Show
 
-instance N w => Encode N1 w AtomType where
-  encode Data = 0
-  encode Case = 1
-  encode Arm = 2
-  encode Arrow = 3
-  encode UnCase = 4
-  encode Let = 5
-  encode In = 6
-  encode LetRef = 7
-  encode LetRefPadding = 8
-  encode UnLet = 9
-  encode Add = 10
+encodeAtomType :: (N w) => AtomType -> Word N1 w
+encodeAtomType Data = 0
+encodeAtomType Case = 1
+encodeAtomType Arm = 2
+encodeAtomType Arrow = 3
+encodeAtomType UnCase = 4
+encodeAtomType Let = 5
+encodeAtomType In = 6
+encodeAtomType LetRef = 7
+encodeAtomType LetRefPadding = 8
+encodeAtomType UnLet = 9
+encodeAtomType Add = 10
 
-instance (N w) => Decode N1 w AtomType where
-  decode 0 = Data
-  decode 1 = Case
-  decode 2 = Arm
-  decode 3 = Arrow
-  decode 4 = UnCase
-  decode 5 = Let
-  decode 6 = In
-  decode 7 = LetRef
-  decode 8 = LetRefPadding
-  decode 9 = UnLet
-  decode 10 = Add
-
-instance (N w, Encode (S l1) w AtomType) => Encode l2 w (Vec l2 AtomType) where
-  encode = Word . vmap (vhead . unWord . encode)
+decodeAtomType :: (N w) => Word N1 w -> AtomType
+decodeAtomType 0 = Data
+decodeAtomType 1 = Case
+decodeAtomType 2 = Arm
+decodeAtomType 3 = Arrow
+decodeAtomType 4 = UnCase
+decodeAtomType 5 = Let
+decodeAtomType 6 = In
+decodeAtomType 7 = LetRef
+decodeAtomType 8 = LetRefPadding
+decodeAtomType 9 = UnLet
+decodeAtomType 10 = Add
