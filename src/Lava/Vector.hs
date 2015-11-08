@@ -1241,9 +1241,7 @@ instance Add a b c => Add (S a) b (S c)
 
 class Mul a b c | a b -> c
 instance Mul Z b Z
-instance Mul a Z Z
 instance (Mul a b x, Add x b c) => Mul (S a) b c
-instance (Mul a b x, Add x a c) => Mul a (S b) c
 
 newtype Vec n a = Vec [a]
   deriving Show

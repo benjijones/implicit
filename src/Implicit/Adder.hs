@@ -1,15 +1,14 @@
 module Implicit.Adder where
 
-import Prelude hiding (Word)
+import Prelude hiding (Word, splitAt)
 
-import Implicit.Atom
-import Implicit.Sentence
+import Implicit.AtomType
 
 import Lava.Word
 import Lava.Vector
-
-validInput :: Word l N4
-validInput = vmap fromInteger (typeEncoding (Add False) +> typeEncoding (Data 1 False) +> typeEncoding (Data 0 False) +> vempty)
-
-adder :: (N w) => (Word (S (S (S Z))) w) -> (Word (S Z) w)
-adder input = (input `vat` n1) + (input `vat` n2) +> vempty
+import Lava.Generic
+             
+adder :: (N w) => (Word N3 w) -> (Word N3 w)
+adder input = match (encode $ vmap (encode) $ Add +> Data +> Data +> vempty) (fst $ splitAt n4 $ input)
+                    (encode $ (unWord input `vat` n1) + (unWord input `vat` n2) +> vrepeat 0)
+                    input

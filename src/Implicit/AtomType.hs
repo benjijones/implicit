@@ -1,6 +1,9 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 
 module Implicit.AtomType where
 
@@ -23,7 +26,7 @@ data AtomType =
   | Add
   deriving Show
 
-instance (N w) => Encode N1 w AtomType where
+instance N w => Encode N1 w AtomType where
   encode Data = 0
   encode Case = 1
   encode Arm = 2
@@ -36,6 +39,7 @@ instance (N w) => Encode N1 w AtomType where
   encode UnLet = 9
   encode Add = 10
 
+instance (N w) => Decode N1 w AtomType where
   decode 0 = Data
   decode 1 = Case
   decode 2 = Arm
@@ -47,3 +51,6 @@ instance (N w) => Encode N1 w AtomType where
   decode 8 = LetRefPadding
   decode 9 = UnLet
   decode 10 = Add
+
+instance (N w, Encode (S l1) w AtomType) => Encode l2 w (Vec l2 AtomType) where
+  encode = Word . vmap (vhead . unWord . encode)
