@@ -49,12 +49,6 @@ delayEn init en a = lazyZipWithG (delayBitEn en) init a
 (?) :: Generic a => Bit -> (a, a) -> a
 cond ? (a, b) = zipWithG (muxBit cond) b a
 
--- | Compare 2 inputs using (===)
--- return 'true' param if they match,
--- 'false' param otherwise
-match :: (Generic a, Generic b) => a -> a -> b -> b -> b
-match a input true false = ((input === a) ? (true, false))
-
 -- | Generic 'select'.
 selectG :: Generic a => [Bit] -> [a] -> a
 selectG sels inps = tree1 (zipWithG (<|>))

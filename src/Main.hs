@@ -1,12 +1,16 @@
 module Main where
 
-import qualified Implicit.Expr as E
-import Implicit.ExprToAtom
-import qualified Implicit.AtomType as A
+import Prelude hiding (splitAt, Word)
+
+--import qualified Implicit.Expr as E
+--import Implicit.ExprToAtom
+import Implicit.AtomType
 import Implicit.Atom
+import Implicit.Match
 --import Implicit.LetReplacer as LR
 --import Implicit.CaseReducer as CR
 import Implicit.EvaluationMemory
+import Implicit.Let
 --import Implicit.Examples
 --import Implicit.LetMemory
 
@@ -22,26 +26,13 @@ import Lava.Generic
 
 main :: IO ()
 main = do
-  {-let extract proc = (val . address $ proc, memory proc, CR.state . caseReducer $ proc)
-     results = simulateProcessor [15] [0..15] extract letInCase
-
-  mapM_ (print) (exprToAtoms letInCase :: [A.Atom N5])
-  putStrLn "--------------"
-  mapM_ (\(a,b,c) -> putStrLn $ "State: " ++ show (c) ++ " Address: " ++ show a ++ " Memory: " ++ show (A.wordToAtom b)) results
-  -}
-
-  let atoms = [ Atom False A.Let 1
-                , Atom False A.Data 1
-                , Atom False A.Data 1
-              , Atom False A.In 0
-                , Atom False A.Let 2
-                  , Atom False A.Data 2
-                , Atom False A.In 0
-                  , Atom False A.LetRef 1
-                  , Atom False A.LetRefPadding 0
-                  , Atom False A.LetRefPadding 0
-                  , Atom False A.LetRef 0
-                , Atom False A.UnLet 2
-              , Atom False A.UnLet 1]
-  mapM_ print . zip [1..] $ atoms
+    putStrLn . showAtoms . decodeAtoms  $ atoms
+    putStrLn . showAtoms . decodeAtoms $ output letReplacer
+    print . unWord $ fst $ splitAt n4 $ atoms
+    print . unWord $ matchPattern (A Let) (at n0 . fst . splitAt n4 $ atoms)
+    print . unWord $ match (A Let +> A Data +> A In +> vempty) (fst $ splitAt n4 $ atoms) (1 :: Word N1 N1) (0 :: Word N1 N1)
 --  mapM_ print . zip [1..] . simulateN 12 . (\a -> (select a, output a)) $ newLetMemory letMemoryInput 1
+
+atoms = encodeVector encodeAtom $ (Atom False Let 0) +> (Atom False Data 0) +> (Atom False In 0) +> vempty
+
+letReplacer = letReplace atoms (LetReplacer 0 0)

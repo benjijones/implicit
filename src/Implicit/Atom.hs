@@ -19,13 +19,19 @@ import Implicit.AtomType
 data Atom = Atom { atomDeleted :: Deleted
                    , atomType :: AtomType
                    , atomContents :: Integer }
-  deriving Show
 
 type Deleted = Bool
 
 type AtomN = N10
 type DataN = N5
 type TypeN = N4
+
+instance Show Atom where
+  show atom = (if atomDeleted atom then "X" else "O") ++ " " ++ show (atomType atom) ++ " " ++ show (atomContents atom)
+
+
+showAtoms :: Vec l Atom -> String
+showAtoms = unlines . map show . velems
 
 encodeDeleted :: Deleted -> Word N1 N1
 encodeDeleted = Word . vsingle . vsingle . boolToBit
@@ -46,6 +52,9 @@ decodeAtom atom = Atom (decodeDeleted deleted)
     where
       (deleted, rest) = splitAt n1 atom
       (ty, contents) = splitAt n4 rest
+
+decodeAtoms :: Word l AtomN -> Vec l Atom
+decodeAtoms = vmap decodeAtom . separate
 
 typeBits :: (N n) => Word d (S (S (S (S (S n))))) -> Word d N4
 typeBits = Word . vmap (vtake n4 . vdrop n1) . unWord

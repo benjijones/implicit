@@ -30,8 +30,8 @@ getBits = velems . vhead . unWord
 wordToInts :: Integral a => Word (S l) w -> [a]
 wordToInts = map binToNat . map bitToBools . getBits
 
-instance Show (Word d n) where
-  show = show . unWord
+fromBit :: Bit -> Word N1 N1
+fromBit = Word . vsingle . vsingle
 
 -- | This is only for using haskell's
 -- integer literals - if the Word
@@ -70,5 +70,15 @@ combine l r = Word (vzipWith (<++>) (unWord $ l) (unWord $ r))
 wordMap :: (Word N1 w -> a) -> Word l w -> Vec l a
 wordMap f = vmap (f . Word . vsingle) . unWord
 
+-- | Like 'unwords' from Prelude
+separate :: Word l w -> Vec l (Word N1 w)
+separate = vmap (Word . vsingle) . unWord
+
 splitAt :: (N n, Add n m w) => n -> Word l w -> (Word l n, Word l m)
 splitAt n (Word w) = (Word $ vmap (vtake n) w, Word $ vmap (vdrop n) w)
+
+at :: (N n, Less n l) => n -> Word l w -> Word N1 w
+at n (Word w) = Word . vsingle $ w `vat` n
+
+empty :: (N l, N w) => Word l w
+empty = 0

@@ -66,3 +66,19 @@ simpleRAM = ram [] Width9 $ RamInputs {
     ramAddress = delay 1 . delay 1 $ 0 :: Word N11,
     ramWrite = 1
   }
+
+
+atomProgram = Atom False A.Let 1
+              +> Atom False A.Data 1
+              +> Atom False A.Data 1
+            +> Atom False A.In 0
+              +> Atom False A.Let 2
+                +> Atom False A.Data 2
+              +> Atom False A.In 0
+                +> Atom False A.LetRef 1
+                +> Atom False A.LetRefPadding 0
+                +> Atom False A.LetRefPadding 0
+                +> Atom False A.LetRef 0
+              +> Atom False A.UnLet 2
+            +> Atom False A.UnLet 1
+            +> vempty
