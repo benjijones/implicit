@@ -24,7 +24,6 @@ type Deleted = Bool
 
 type AtomN = N10
 type DataN = N5
-type TypeN = N4
 
 instance Show Atom where
   show atom = (if atomDeleted atom then "X" else "O") ++ " " ++ show (atomType atom) ++ " " ++ show (atomContents atom)
@@ -42,7 +41,7 @@ decodeDeleted = bitToBool . vhead . vhead . unWord
 encodeAtom :: Atom -> Word N1 AtomN
 encodeAtom (Atom deleted ty contents) =
              (encodeDeleted deleted) `combine`
-             (encodeAtomType ty :: Word N1 TypeN) `combine`
+             (encodeAtomType ty) `combine`
              (encodeInteger contents :: Word N1 DataN)
 
 decodeAtom :: Word N1 AtomN -> Atom

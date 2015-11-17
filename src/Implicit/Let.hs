@@ -18,7 +18,7 @@ instance Generic LetReplacer where
   generic (LetReplacer contents output) = cons LetReplacer >< contents >< output
 
 letReplace :: Word N3 AtomN -> LetReplacer -> LetReplacer
-letReplace input prev = match (A Let +> Any +> A In +> vempty) (fst $ splitAt n4 $ input)
+letReplace input prev = match (A Let +> Any +> A In +> vempty) input
                           LetReplacer {
                             contents = at n1 input,
                             output = empty

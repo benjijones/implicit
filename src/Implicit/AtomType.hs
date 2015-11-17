@@ -26,7 +26,9 @@ data AtomType =
   | Add
   deriving Show
 
-encodeAtomType :: (N w) => AtomType -> Word N1 w
+type AtomTypeN = N4
+
+encodeAtomType :: AtomType -> Word N1 AtomTypeN
 encodeAtomType Data = 0
 encodeAtomType Case = 1
 encodeAtomType Arm = 2

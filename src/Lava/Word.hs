@@ -74,6 +74,17 @@ wordMap f = vmap (f . Word . vsingle) . unWord
 separate :: Word l w -> Vec l (Word N1 w)
 separate = vmap (Word . vsingle) . unWord
 
+-- | slices by length, not width
+-- starting at 'm'
+-- and ending at 'n'
+-- indices that don't work
+-- shouldn't compile
+-- TODO **finish proof** currently the second proof is missing pending 
+-- better representations -- see 'vslice' in Vector.hs
+slice :: ( N m, N n
+          , Add n l2 m) => n -> m -> Word l1 w -> Word l2 w
+slice n m = Word . vslice n m . unWord
+
 splitAt :: (N n, Add n m w) => n -> Word l w -> (Word l n, Word l m)
 splitAt n (Word w) = (Word $ vmap (vtake n) w, Word $ vmap (vdrop n) w)
 

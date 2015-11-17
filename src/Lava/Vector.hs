@@ -43,6 +43,7 @@ module Lava.Vector
   , vat        -- :: (N n, Less n m) => Vec m a -> n -> a
   , vtake      -- :: N n => n -> Vec m a -> Vec n a
   , vdrop      -- :: (N n, Add n o m) => n -> Vec m a -> Vec o a
+  , vslice     -- :: (N m, N n, N x, Add n wo m, Add n wi x, Less x wo) => n -> m -> Vec wi a -> Vec wo a
   , vsplitAt   -- :: (N m, Add m n o) => m -> Vec o a -> (Vec m a, Vec n a)
   , vgroup     -- :: (N n, Mul n o m) => n -> Vec m a -> Vec o (Vec n a)
   , vtranspose -- :: Vec n (Vec m a) -> Vec m (Vec n a)
@@ -1350,6 +1351,20 @@ vtake n (Vec as) = Vec $ take (value n) as
 
 vdrop :: (N n, Add n o m) => n -> Vec m a -> Vec o a
 vdrop n (Vec as) = Vec $ drop (value n) as
+
+-- | invariants maintained by type:
+-- output width is difference of indices
+-- w0 = m - n
+-- TODO **finish proof** unable to actually
+-- write this one because of type representation
+-- starting index leaves room for output width
+-- n + wi < wo
+vslice :: ( N m, N n
+          , Add n wo m
+          --, Add n wi x, Less x wo
+          ) => n -> m -> Vec wi a -> Vec wo a
+vslice n m (Vec as) = Vec . take (value m - value n) . drop (value n) $ as
+
 
 vsplitAt :: (N m, Add m n o) => m -> Vec o a -> (Vec m a, Vec n a)
 vsplitAt m (Vec as) = (Vec bs, Vec cs)

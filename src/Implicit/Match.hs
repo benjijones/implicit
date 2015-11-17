@@ -2,6 +2,7 @@ module Implicit.Match where
 
 import Prelude hiding (Word)
 
+import Implicit.Atom
 import Implicit.AtomType
 
 import Lava.Bit
@@ -13,9 +14,12 @@ data Pattern =
     A AtomType
   | Any
 
-matchPattern :: (N w) => Pattern -> Word N1 w -> Word N1 N1
+matchPattern :: Pattern -> Word N1 AtomTypeN -> Word N1 N1
 matchPattern (A ty) input = fromBit (encodeAtomType ty === input)
 matchPattern Any _ = fromBit high
 
-match :: (N w, Generic a) => Vec l Pattern -> Word l w -> a -> a -> a
-match patterns input true false = andG (vzipWith matchPattern patterns (separate input)) ? (true, false)
+match :: Generic a => Vec l Pattern -> Word l AtomN -> a -> a -> a
+match patterns input true false = andG (vzipWith matchPattern
+                                        patterns
+                                        (separate $ typeBits input))
+                                   ? (true, false)
