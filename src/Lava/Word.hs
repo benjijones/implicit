@@ -52,6 +52,9 @@ instance Generic (Word d n) where
 instance Eq (Word l n) where
   a == b = bitToBool (a === b)
 
+append :: (Add l1 l2 l3) => Word l1 w -> Word l2 w -> Word l3 w
+append (Word a) (Word b) = Word $ a <++> b
+
 encodeInteger :: (N w) => Integer -> Word N1 w
 encodeInteger = fromInteger
 
@@ -81,8 +84,8 @@ separate = vmap (Word . vsingle) . unWord
 -- shouldn't compile
 -- TODO **finish proof** currently the second proof is missing pending 
 -- better representations -- see 'vslice' in Vector.hs
-slice :: ( N m, N n
-          , Add n l2 m) => n -> m -> Word l1 w -> Word l2 w
+slice :: ( N n, N m
+          , Add n lo m) => n -> m -> Word li w -> Word lo w
 slice n m = Word . vslice n m . unWord
 
 splitAt :: (N n, Add n m w) => n -> Word l w -> (Word l n, Word l m)

@@ -1359,7 +1359,7 @@ vdrop n (Vec as) = Vec $ drop (value n) as
 -- write this one because of type representation
 -- starting index leaves room for output width
 -- n + wi < wo
-vslice :: ( N m, N n
+vslice :: ( N n, N m
           , Add n wo m
           --, Add n wi x, Less x wo
           ) => n -> m -> Vec wi a -> Vec wo a

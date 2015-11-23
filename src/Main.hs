@@ -27,12 +27,21 @@ import Lava.Generic
 main :: IO ()
 main = do
     putStrLn . showAtoms . decodeAtoms  $ atoms
---    putStrLn . showAtoms . decodeAtoms $ output letReplacer
+    putStrLn . showAtoms . decodeAtoms $ output letReplacer
 --    print . unWord $ fst $ splitAt n4 $ atoms
---    print . unWord $ match (A Let +> A Data +> A In +> vempty) (fst $ splitAt n4 $ atoms) (1 :: Word N1 N1) (0 :: Word N1 N1)
+--    print . unWord $ match (A Let +> A Data +> A In +> vempty) atoms (1 :: Word N1 N1) (0 :: Word N1 N1)
 --  mapM_ print . zip [1..] . simulateN 12 . (\a -> (select a, output a)) $ newLetMemory letMemoryInput 1
 
-atoms :: Word N3 AtomN
-atoms = encodeVector encodeAtom $ (Atom False Let 0) +> (Atom False Data 0) +> (Atom False In 0) +> vempty
+atoms :: Word N4 AtomN
+atoms = encodeVector encodeAtom $ (Atom False LetRef 0) +>
+                                  (Atom False Data 1) +>
+                                  (Atom False Data 1) +>
+                                  (Atom False Data 1) +> vempty
 
-letReplacer = letReplace atoms (LetReplacer 0 0)
+letContents :: Word N3 AtomN
+letContents = encodeVector encodeAtom $ (Atom False Data 5) +>
+                                        (Atom False Data 5) +>
+                                        (Atom False Data 5) +> vempty
+
+
+letReplacer = letReplace atoms (LetReplacer (letContents) 0)
