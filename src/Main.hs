@@ -44,4 +44,4 @@ letContents = encodeVector encodeAtom $ (Atom False Data 5) +>
                                         (Atom False Data 5) +> vempty
 
 
-letReplacer = letReplace atoms (LetReplacer (letContents) 0)
+letReplacer = letReplace (LetReplacer atoms (letContents) 0)

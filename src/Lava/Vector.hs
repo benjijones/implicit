@@ -181,7 +181,7 @@ module Lava.Vector
   , n244, n245, n246, n247
   , n248, n249, n250, n251
   , n252, n253, n254, n255
-  , Z(), S()
+  , Z(), S(), M()
   , Vec(Vec)
   , N(value)
   , Add
@@ -194,6 +194,7 @@ import Control.Monad
 
 data Z = Z
 data S a = S a
+data M a = M a
 
 type N0 = Z
 type N1 = S N0
@@ -1231,6 +1232,9 @@ instance N Z where
 
 instance N a => N (S a) where
   value n = 1 + value (npred n)
+
+instance N a => N (M a) where
+  value n = undefined
 
 class Less a b
 instance Less Z (S a)

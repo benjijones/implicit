@@ -3,10 +3,11 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DeriveFoldable #-}
 
 module Lava.Word where
 
-import Prelude hiding (Word)
+import qualified Prelude as P
 
 import Lava.Bit
 import Lava.Binary
@@ -21,22 +22,41 @@ import Data.List(find)
 -- type-level encodings of:
 --  the width of the signal
 -- the length of the signal
-newtype Word length width = Word { unWord :: Vec length (Vec width Bit) }
+data Word length width where
+  Single :: Vec width Bit -> Word N1 width
+  Cons :: Vec width Bit -> Word length width -> Word (S length) width
+  Many :: P.Integer -> Word length width -> Word (M length) width
+ 
+foldr :: (Vec width Bit -> b)
+        -> (Vec width Bit -> b -> b)
+        -> (P.Integer -> b -> b)
+        -> Word length width ->
+        b
+foldr single _ _ (Single word) = single word
+foldr single cons many (Cons head tail) = head `cons` foldr single cons many tail
+foldr single cons many (Many n word) = n `many` foldr single cons many word
 
-getBits :: Word (S l) w -> [Bit]
-getBits = velems . vhead . unWord
+-- I want to eliminate the Atom type and translate 'Expr'
+-- directly to 'Word' and functions between 'Word'
+-- and then turn 'Word' into function between Bits
+-- this may not be realized for a while, because it means you can't
+-- run arbitrary expressions, only ones that you have statically
+-- prepared your hardware to evaluatate
 
+--toBits :: Word (S l) w -> [Bit]
+--toBits = foldr velems (\head rest -> (velems head )
+{-}
 -- | Convert a Word to a list of its integer outputs
 wordToInts :: Integral a => Word (S l) w -> [a]
-wordToInts = map binToNat . map bitToBools . getBits
+wordToInts = map binToNat . map bitToBools . toBits
 
 fromBit :: Bit -> Word N1 N1
 fromBit = Word . vsingle . vsingle
 
 -- | This is only for using haskell's
 -- integer literals - if the Word
--- is wider than N1, the number is repeated
--- to create the right width
+-- is longer than N1, the number is repeated
+-- to create the right length
 instance (N l, N w) => Num (Word l w) where
   (Word a) + (Word b) = undefined
   (Word a) - (Word b) = undefined
@@ -96,3 +116,5 @@ at n (Word w) = Word . vsingle $ w `vat` n
 
 empty :: (N l, N w) => Word l w
 empty = 0
+
+-}
