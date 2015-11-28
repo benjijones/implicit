@@ -1,20 +1,15 @@
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleContexts #-}
-
-
 module Implicit.Atom where
   
 import Prelude hiding (Word, splitAt)
 import Data.Bits
 
 import Lava.Bit
-import Lava.Word
 import Lava.Vector
 import Lava.Prelude
 
 import Implicit.AtomType
+import Implicit.Word
+import Implicit.PolyTree
 
 data Atom = Atom { atomDeleted :: Deleted
                    , atomType :: AtomType
@@ -32,31 +27,34 @@ instance Show Atom where
 showAtoms :: Vec l Atom -> String
 showAtoms = unlines . map show . velems
 
-encodeDeleted :: Deleted -> Word N1 N1
-encodeDeleted = Word . vsingle . vsingle . boolToBit
+encodeDeleted :: Deleted -> Word N1
+encodeDeleted = Single . vsingle . boolToBit
 
-decodeDeleted :: Word N1 N1 -> Deleted
-decodeDeleted = bitToBool . vhead . vhead . unWord
+decodeDeleted :: Word N1 -> Deleted
+decodeDeleted (Single vec) = bitToBool . vhead $ vec
 
-encodeAtom :: Atom -> Word N1 AtomN
+encodeAtom :: Atom -> Word AtomN
 encodeAtom (Atom deleted ty contents) =
              (encodeDeleted deleted) `combine`
              (encodeAtomType ty) `combine`
-             (encodeInteger contents :: Word N1 DataN)
+             (encodeInteger contents :: Word DataN)
 
-decodeAtom :: Word N1 AtomN -> Atom
-decodeAtom atom = Atom (decodeDeleted deleted)
-                       (decodeAtomType ty)
-                       (decodeInteger contents)
-    where
-      (deleted, rest) = splitAt n1 atom
-      (ty, contents) = splitAt n4 rest
+encodeAtoms :: [Atom] -> Word AtomN
+encodeAtoms = collapse . map encodeAtom
 
-decodeAtoms :: Word l AtomN -> Vec l Atom
-decodeAtoms = vmap decodeAtom . separate
+decodeAtom :: Vec AtomN Bit -> Atom
+decodeAtom atom = Atom (decodeDeleted (Single deleted))
+                       (decodeAtomType (Single ty))
+                       (decodeInteger (Single contents))
+  where (deleted, rest) = vsplitAt n1 atom
+        (ty, contents) = vsplitAt n4 rest
 
-typeBits :: (N n) => Word d (S (S (S (S (S n))))) -> Word d N4
-typeBits = Word . vmap (vtake n4 . vdrop n1) . unWord
+decodeAtoms :: Word AtomN -> [Atom]
+decodeAtoms = map decodeAtom . toList
+   
 
-contentBits :: (N n) => Word d (S (S (S (S (S n))))) -> Word d n
-contentBits = Word . vmap (vdrop n5) . unWord
+typeBits :: (N n) => Word (S (S (S (S (S n))))) -> Word N4
+typeBits = fst . splitAt n4 . snd . splitAt n1
+
+contentBits :: (N n) => Word (S (S (S (S (S n))))) -> Word n
+contentBits = snd . splitAt n5

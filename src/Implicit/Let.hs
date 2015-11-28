@@ -5,8 +5,8 @@ import Prelude hiding (Word, splitAt)
 import Implicit.Atom
 import Implicit.AtomType
 import Implicit.Match
+import Implicit.Word
 
-import Lava.Word
 import Lava.Bit
 import Lava.Vector
 

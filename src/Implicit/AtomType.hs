@@ -1,15 +1,9 @@
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE AllowAmbiguousTypes #-}
-
 module Implicit.AtomType where
 
 import Prelude hiding (Word)
 
-import Lava.Word
+import Implicit.Word
+
 import Lava.Vector
 
 data AtomType =
@@ -28,7 +22,7 @@ data AtomType =
 
 type AtomTypeN = N4
 
-encodeAtomType :: AtomType -> Word N1 AtomTypeN
+encodeAtomType :: AtomType -> Word AtomTypeN
 encodeAtomType Data = 0
 encodeAtomType Case = 1
 encodeAtomType Arm = 2
@@ -41,7 +35,7 @@ encodeAtomType LetRefPadding = 8
 encodeAtomType UnLet = 9
 encodeAtomType Add = 10
 
-decodeAtomType :: (N w) => Word N1 w -> AtomType
+decodeAtomType :: (N w) => Word w -> AtomType
 decodeAtomType 0 = Data
 decodeAtomType 1 = Case
 decodeAtomType 2 = Arm

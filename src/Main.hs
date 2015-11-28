@@ -11,6 +11,7 @@ import Implicit.Match
 --import Implicit.CaseReducer as CR
 import Implicit.EvaluationMemory
 import Implicit.Let
+import Implicit.Word
 --import Implicit.Examples
 --import Implicit.LetMemory
 
@@ -21,7 +22,6 @@ import Lava.Recipe
 import Lava.Binary
 import Lava.Vhdl
 import Lava.Ram
-import Lava.Word
 import Lava.Generic
 
 main :: IO ()

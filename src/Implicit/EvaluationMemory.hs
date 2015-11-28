@@ -2,7 +2,6 @@ module Implicit.EvaluationMemory where
 
 import Prelude hiding (Word)
 
-import Lava.Word
 import Lava.Vector
 import Lava.Ram
 {-
