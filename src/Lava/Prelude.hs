@@ -186,6 +186,9 @@ instance N n => Num (Vec n Bit) where
     where xs = velems a
   fromInteger i = sized (\n -> Vec (i `ofWidth` n))
 
+instance Eq (Vec w Bit) where
+  a == b = bitToBool (a === b)
+
 
 -- | Subtracts @b@ from @a@, but if @b@ is larger than @a@ then
 -- result is @0@.

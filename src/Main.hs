@@ -6,7 +6,6 @@ import Prelude hiding (splitAt, Word)
 --import Implicit.ExprToAtom
 import Implicit.AtomType
 import Implicit.Atom
-import Implicit.Match
 --import Implicit.LetReplacer as LR
 --import Implicit.CaseReducer as CR
 import Implicit.EvaluationMemory
