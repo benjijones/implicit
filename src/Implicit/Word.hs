@@ -8,16 +8,17 @@
 module Implicit.Word where
 
 import Implicit.AtomType
+import Implicit.Context
 import Implicit.PolyTree
 
-import Prelude hiding (Word, foldr, take, drop, splitAt)
+import Prelude hiding (Word, take, drop, splitAt, zipWith)
 
 import Lava.Bit
 import Lava.Binary
 import Lava.Vector
 import Lava.Prelude
 import Lava.Arithmetic
-import Lava.Generic
+import qualified Lava.Generic as G
 
 import Data.List(find, genericReplicate)
  
@@ -54,20 +55,30 @@ matchPattern Any prev = Word {
                           , typeBits = typeBits prev
                           , contents = contents prev }
 
-match :: PolyTree Pattern -> Word w -> Sentence w
-match patterns input = fmap (\(index, pattern) -> matchPattern pattern (withDelay index input)) (polyZipWith (,) [0..] patterns)
+match :: PolyTree (Pattern, Word w -> Context (String, Word w) (Word w)) -> Sentence w -> Sentence w
+match cases inputs = fst . (flip runContext) [] . sequence $ zipWith (\(pattern, f) -> f . matchPattern pattern) cases inputs
 
+{- functions that modify Words- these should be used
+   in place of manually modifying values in Word -}
 
-withDelay :: Integer -> Word w -> Word w
-withDelay delay prev = Word {
-                         deleted = deleted prev
-                       , pattern = pattern prev
-                       , delays = delay
-                       , typeBits = typeBits prev
-                       , contents = contents prev }
+delay :: (N w) => Word w -> Word w
+delay word = Word {
+                       deleted = G.delay 0 $ deleted word
+                     , pattern = pattern word
+                     , delays =  1 + delays word
+                     , typeBits = G.delay 0 $ typeBits word
+                     , contents = G.delay 0 $ contents word }
+
+mapContents :: (Vec w Bit -> Vec w Bit) -> Word w -> Word w
+mapContents f word = Word {
+                        deleted = deleted word
+                      , pattern = pattern word
+                      , delays = delays word
+                      , typeBits = typeBits word
+                      , contents = f $ contents word  }
 
 toList :: Sentence w -> [Word w]
-toList = foldr [] (:) (:)
+toList = foldr (:) []
 
 -- I want to eliminate the Atom type and translate 'Expr'
 -- directly to 'Word' and functions between 'Word'
@@ -101,12 +112,6 @@ encodeInteger n = Word {
 decodeInteger :: Word w -> Integer
 decodeInteger = binToInt . map bitToBool . velems . contents
 {-}
-encodeVector :: (Mul l1 l2 l3) => (a -> Word l2 w) -> Vec l1 a -> Word l3 w
-encodeVector f = Word . vconcat . vmap (unWord . f)
-
-delayW :: Word (S l) w -> Word (S (S l)) w
-delayW (Word word) = Word (word <+ vmap (delay 0) (vlast word))
-
 
 -- | convert a non-empty list of Singles
 -- into a Word list with Cons
@@ -141,8 +146,3 @@ drop :: Integer -> Sentence w -> Sentence w
 drop 0 word = word
 drop n (Cons _ rest) = drop (n - 1) rest
 drop n (Many _ rest) = drop (n - 1) rest
-
-{-}
-at :: (N n, Less n l) => n -> Word l w -> Word N1 w
-at n (Word w) = Word . vsingle $ w `vat` n
--}

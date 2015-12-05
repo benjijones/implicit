@@ -4,41 +4,42 @@ import Prelude hiding (Word, splitAt)
 
 import Implicit.Atom
 import Implicit.AtomType
+import Implicit.ShiftRegister
 import Implicit.PolyTree
 import Implicit.Word
+import Implicit.Context.BindWord
 
 import Lava.Bit
 import Lava.Vector
+import Lava.Ram
 
 data LetReplacer w = LetReplacer {
     input :: Sentence w
-  , reference :: Word w
-  , 
-  , letContents :: Sentence w
+
+  , selected :: Word w
+  , lookupTable :: Vec (S w) Bit
+  
+  , depth :: Word w
+  , ramOut :: Word w
+
   , output :: Sentence w
 }
 
-newLetReplacer input = LetReplacer {
-                         input = input
-                       , reference = newWord 0 0
-                       , letContents = newWord 0 0
-                       , output = input }
-
-letReplace :: LetReplacer w -> LetReplacer w
-letReplace prev = case match (A Let <:+> Many Any <:+> Nil) (input prev) of
-                    Cons bind (Many bound Nil) -> LetReplacer {
-                            input = input prev,
-                            letContents = slice n1 n4 (input prev),
-                            output = 0 <:+> Many 0 <:+> Nil
-                          } ${-}
-                        match (A LetRef +> n3 <:*> Any) (input prev)
-                          LetReplacer {
-                            input = input prev,
-                            contents = contents prev,
-                            output = contents prev `append` empty
-                          }-}
-                          LetReplacer {
-                            input = input prev,
-                            contents = contents prev,
-                            output = (input prev)
-                          }
+letReplace :: N w => Word w -> Word w
+letReplace input = getElem 2 $ match ((A Let, onLet) <:+> (Many (Any, onAny) ((A In, onIn) <:+> Nil))) (serialToParallel 3 input)
+                    where onLet w = do 
+                                      bindWord "selected" w
+                                      return w
+                          onAny w = undefined
+                          onIn w = undefined
+                     {-LetReplacer {
+                        input = input
+                      , selected = bind
+                      , lookupTable = ram [] Width9 $
+                                     RamInputs {
+                                       ramData = depth
+                                     , ramAddress = contents $ selected bind
+                                     , ramWrite = inv $ deleted bind }
+                      , depth = mapContents (+1) . getElem 0 $ serialToParallel 1 $ depth
+                      , ramOut = undefined
+                      , output = 0 <:+> Many 0 <:+> Nil }-}

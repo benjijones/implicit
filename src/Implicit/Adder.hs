@@ -5,11 +5,15 @@ import Prelude hiding (Word, splitAt)
 import Implicit.AtomType
 import Implicit.Atom
 import Implicit.Word
+import Implicit.PolyTree
+import Implicit.Context.BindWord
+import Implicit.ShiftRegister
 
 import Lava.Vector
              
 adder :: Word AtomN -> Word AtomN
-adder input = match (A Add +> A Data +> A Data +> vempty)
-                    input
-                      (Word $ (unWord input `vat` n1) + (unWord input `vat` n2) +> vrepeat 0)
-                      input
+adder = getElem 2 . match ((A Add, return) <:+>
+                           (A Data, bindWord "arg1") <:+>
+                           (A Data, \arg2 -> do 
+                                arg1 <- getWord "arg1"
+                                return (mapContents ((+) . contents $ arg1) arg2)) <:+> Nil) . serialToParallel 3

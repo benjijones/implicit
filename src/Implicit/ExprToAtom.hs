@@ -10,7 +10,7 @@ import Lava.Vector
 exprToAtoms :: Eq b => Expr b -> [Atom]
 exprToAtoms = result . exprToAtomsC
 
-exprToAtomsC :: Eq b => Expr b -> Context b [Atom]
+exprToAtomsC :: Eq b => Expr b -> Context (Binding b) [Atom]
 exprToAtomsC (E.Data val) = return [Atom False A.Data val]
 
 exprToAtomsC (E.Case scrut cases) = do
