@@ -27,9 +27,7 @@ data LetReplacer w = LetReplacer {
 
 letReplace :: N w => Word w -> Word w
 letReplace input = getElem 2 $ match ((A Let, onLet) <:+> (Many (Any, onAny) ((A In, onIn) <:+> Nil))) (serialToParallel 3 input)
-                    where onLet w = do 
-                                      bindWord "selected" w
-                                      return w
+                    where onLet w = bindWord "selected" w
                           onAny w = undefined
                           onIn w = undefined
                      {-LetReplacer {

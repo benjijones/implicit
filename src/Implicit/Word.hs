@@ -25,7 +25,7 @@ import Data.List(find, genericReplicate)
 data Word w = Word {
                 deleted :: Bit
               , pattern :: Pattern
-              , delays :: Integer
+              , clockCycle :: Integer
               , typeBits :: Vec N4 Bit
               , contents :: Vec w Bit }
 
@@ -45,13 +45,13 @@ matchPattern :: Pattern -> Word w -> Word w
 matchPattern (A ty) prev  = Word {
                               deleted = (deleted prev) <|> (encodeAtomType ty === typeBits prev)
                             , pattern = A ty
-                            , delays = delays prev
+                            , clockCycle = clockCycle prev
                             , typeBits = typeBits prev
                             , contents = contents prev }
 matchPattern Any prev = Word {
                             deleted = deleted prev
                           , pattern = Any
-                          , delays = delays prev
+                          , clockCycle = clockCycle prev
                           , typeBits = typeBits prev
                           , contents = contents prev }
 
@@ -65,7 +65,7 @@ delay :: (N w) => Word w -> Word w
 delay word = Word {
                        deleted = G.delay 0 $ deleted word
                      , pattern = pattern word
-                     , delays =  1 + delays word
+                     , clockCycle = -1 + clockCycle word
                      , typeBits = G.delay 0 $ typeBits word
                      , contents = G.delay 0 $ contents word }
 
@@ -73,7 +73,7 @@ mapContents :: (Vec w Bit -> Vec w Bit) -> Word w -> Word w
 mapContents f word = Word {
                         deleted = deleted word
                       , pattern = pattern word
-                      , delays = delays word
+                      , clockCycle = clockCycle word
                       , typeBits = typeBits word
                       , contents = f $ contents word  }
 
@@ -105,7 +105,7 @@ encodeInteger :: (N w) => Integer -> Word w
 encodeInteger n = Word {
                          deleted = 0
                        , pattern = A Data
-                       , delays = 0
+                       , clockCycle = 0
                        , typeBits = encodeAtomType Data
                        , contents = fromInteger n }
 
